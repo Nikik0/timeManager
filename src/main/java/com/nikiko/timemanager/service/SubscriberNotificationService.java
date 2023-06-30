@@ -162,12 +162,14 @@ public class SubscriberNotificationService {
         log.info("+++ events" + events);
 
         for (EventEntity event: events) {
+            log.info("now sending event id is " + event.getId());
             retryIncrease(sub);
             sendEvent(sub,eventResponseMapper.mapEntityToResponse(event)).flatMap(health ->{
                 if (health.isDeliverySuccessful())
                     removeDeliveredEvents(sub,eventResponseMapper.mapEntityToResponse(event));
                 return Mono.just(health);
             }).subscribe();
+            log.info("sending completed, should change the event now");
             updateEventAfterSending(event);
         }
     }
@@ -177,6 +179,7 @@ public class SubscriberNotificationService {
 //        event.toBuilder()
 //                .lastHappened(event.getNextEventTime())
 //                .nextEventTime();
+        log.info("Update event invoked");
         //todo this could lead to bugs if the frequency is less than postpone time, testing required
         eventService.saveEntity(
                 event.toBuilder()
@@ -184,7 +187,11 @@ public class SubscriberNotificationService {
                         .wasPostponed(false)
                         .nextEventTime(event.getNextEventTime().plusMinutes(event.getFrequency()).minusMinutes(postponeMinutes))
                         .build()
-        );
+        ).subscribe();
+        log.info("Updating event " + event.getId() + " nextTime is " + event.getNextEventTime() + " next event should be " +
+                event.getNextEventTime().plusMinutes(event.getFrequency()).minusMinutes(postponeMinutes));
+        log.info("Next event determined like this: " + event.getNextEventTime() + " + "
+        + event.getFrequency() + " - " + postponeMinutes);
         /*LocalDateTime nextEventTime = event.getNextEventTime().plusMinutes(event.getFrequency()).minusMinutes(postponeMinutes);
         if (nextEventTime.isBefore(LocalDateTime.now()))
 
