@@ -10,6 +10,7 @@ import com.nikiko.timemanager.mapper.SubscriberMapper;
 import com.nikiko.timemanager.repository.SubscriberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
@@ -167,18 +168,45 @@ public class SubscriberNotificationService {
                     removeDeliveredEvents(sub,eventResponseMapper.mapEntityToResponse(event));
                 return Mono.just(health);
             }).subscribe();
+            updateEventAfterSending(event);
         }
     }
-    /*
+    @Value("${settings.delayEventTime}")
+    private Long postponeMinutes;
     private void updateEventAfterSending(EventEntity event){
-        event.toBuilder()
-                .lastHappened(event.getNextEventTime())
-                .nextEventTime();
+//        event.toBuilder()
+//                .lastHappened(event.getNextEventTime())
+//                .nextEventTime();
+        //todo this could lead to bugs if the frequency is less than postpone time, testing required
+        eventService.saveEntity(
+                event.toBuilder()
+                        .lastHappened(event.getNextEventTime())
+                        .wasPostponed(false)
+                        .nextEventTime(event.getNextEventTime().plusMinutes(event.getFrequency()).minusMinutes(postponeMinutes))
+                        .build()
+        );
+        /*LocalDateTime nextEventTime = event.getNextEventTime().plusMinutes(event.getFrequency()).minusMinutes(postponeMinutes);
+        if (nextEventTime.isBefore(LocalDateTime.now()))
 
         if (event.isWasPostponed())
-            event.setNextEventTime(event.getNextEventTime().plusMinutes(event.));
+            event.setNextEventTime(event.getNextEventTime().plusMinutes(event.getFrequency()));
+        */
     }
-    */
+
+
+
+    /*
+    e1 10:30 freq 30
+    e2 11:00 freq 60
+    e3 11:30 freq 20
+    e4 12:00
+    e5 13:00
+
+    was 11:00 should happen in 12:00
+    postponed by 1.5h so next event in
+
+     */
+
     private SubscriberHealthCheckDto mapSubToFailedHC(SubscriberEntity subscriberEntity){
         SubscriberHealthCheckDto hc = new SubscriberHealthCheckDto();
         hc.toBuilder()

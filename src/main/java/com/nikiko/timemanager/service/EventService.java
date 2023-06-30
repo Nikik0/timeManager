@@ -78,6 +78,10 @@ public class EventService {
         return eventRepository.getEventEntitiesByOwnerId(owner.getId()).map(responseMapper::mapEntityToResponse);
     }
 
+    public Mono<EventEntity> saveEntity(EventEntity event){
+        return eventRepository.save(event);
+    }
+
     public Mono<EventDto> change(EventRequestDto requestDto){
         return eventRepository.findById(requestDto.getId()).flatMap(event -> eventRepository.save(event.toBuilder()
                 //todo разобраться с ошибками насчет нот нал + скорее всего придется писать свой парсер времени
@@ -167,7 +171,7 @@ public class EventService {
     //todo just thought that we want to postpone the current event but it was already scheduled for the next date by the time user receives notif
     might help adding new column with last time event happened so
     if is the call to postpone was received we could fall back to last date and add to it postpone minutes
-     */
+    */
 
 
 
@@ -184,6 +188,7 @@ public class EventService {
                                         event.setNextEventTime(
                                                 eventEntity.getNextEventTime().plusMinutes(postponeMinutes)
                                         );
+                                        event.setWasPostponed(true);
                                         log.info("event after postpone " + event);
                                         return Mono.just(event);
                                     })
