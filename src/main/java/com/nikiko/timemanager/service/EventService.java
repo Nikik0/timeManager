@@ -169,7 +169,6 @@ public class EventService {
     if is the call to postpone was received we could fall back to last date and add to it postpone minutes
      */
 
-    //todo add columns: was_postponed, last_happened
 
 
     //this is testing of workflow explained above
