@@ -22,8 +22,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 @Slf4j
 public class SubscriberController {
-    @Value("${settings.delayEventTime}")
-    private Long postponeMinutes;
+
     private final SubscriberNotificationService notificationService;
     private final EventService eventService;
 
@@ -58,8 +57,8 @@ public class SubscriberController {
 
     @PostMapping("/postpone")
     public Mono<String> postpone(@RequestBody EventRequestDto eventRequestDto){
-        log.info("SubController minutes to postpone " + postponeMinutes);
-        eventService.postponeEventBetween(eventRequestDto, postponeMinutes, LocalDateTime.now());
+        log.info("SubCont postpone initiated");
+        eventService.postponeEventBetween(eventRequestDto, LocalDateTime.now());
         //eventService.postponeEventsForUser(eventRequestDto.getOwner_id(), postponeMinutes, LocalDateTime.now());
         return Mono.just("Event postponed");
     }

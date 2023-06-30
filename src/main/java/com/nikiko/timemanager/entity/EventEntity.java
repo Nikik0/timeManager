@@ -55,4 +55,8 @@ public class EventEntity {
     private Long ownerId;
     @Column("next_event_time")
     private LocalDateTime nextEventTime;
+    @Column("was_postponed")
+    private boolean wasPostponed;
+    @Column("last_happened")
+    private LocalDateTime lastHappened;
 }

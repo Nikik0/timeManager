@@ -21,4 +21,6 @@ public class EventDto {
     private LocalDateTime changedAt;
     private Long owner_id;
     private LocalDateTime nextEventTime;
+    private boolean wasPostponed;
+    private LocalDateTime lastHappened;
 }

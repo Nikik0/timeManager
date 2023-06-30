@@ -10,6 +10,7 @@ import com.nikiko.timemanager.repository.EventRepository;
 import com.nikiko.timemanager.repository.SubscriberRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -25,6 +26,8 @@ public class EventService {
 
     private final EventRequestMapper requestMapper;
 
+    @Value("${settings.delayEventTime}")
+    private Long postponeMinutes;
     private final EventResponseMapper responseMapper;
     //todo needs to be deleted/webclient shit
     private final WebClient webClient;
@@ -95,6 +98,9 @@ public class EventService {
                         .createdAt(LocalDateTime.now())
                         .changedAt(LocalDateTime.now())
                         .startTime(LocalDateTime.now())
+                        .wasPostponed(false)
+                        .nextEventTime(LocalDateTime.now().plusMinutes(postponeMinutes))
+                        .lastHappened(LocalDateTime.now())
                         .build()
         ).map(responseMapper::mapEntityToResponse);
     }
@@ -127,13 +133,13 @@ public class EventService {
         );
     }
 
-    public void postponeEventAfterEvent(EventDto eventDto, Long additionalMinutes, LocalDateTime currentTime) {
+    public void postponeEventAfterEvent(EventDto eventDto, LocalDateTime currentTime) {
         eventRepository.saveAll(
                 this.getEventEntitiesByOwnerIdAndNextEventTimeAfter(eventDto.getOwner_id(), currentTime)
                         .flatMap(event -> {
                             if (event.getId() != eventDto.getId())
                                 event.setNextEventTime(
-                                        event.getNextEventTime().plusMinutes(additionalMinutes)
+                                        event.getNextEventTime().plusMinutes(postponeMinutes)
                                 );
                             return Mono.just(event);
                         })
@@ -163,8 +169,11 @@ public class EventService {
     if is the call to postpone was received we could fall back to last date and add to it postpone minutes
      */
 
+    //todo add columns: was_postponed, last_happened
+
+
     //this is testing of workflow explained above
-    public void postponeEventBetween(EventRequestDto eventRequestDto, Long additionalMinutes, LocalDateTime currentTime) {
+    public void postponeEventBetween(EventRequestDto eventRequestDto, LocalDateTime currentTime) {
         log.info("postpone method started");
         eventRepository.findById(eventRequestDto.getId()).flatMap(eventEntity -> {
                     eventRepository.saveAll(
@@ -174,7 +183,7 @@ public class EventService {
                                     .flatMap(event -> {
                                         log.info("event before postpone " + event);
                                         event.setNextEventTime(
-                                                eventEntity.getNextEventTime().plusMinutes(additionalMinutes)
+                                                eventEntity.getNextEventTime().plusMinutes(postponeMinutes)
                                         );
                                         log.info("event after postpone " + event);
                                         return Mono.just(event);
