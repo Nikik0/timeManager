@@ -99,7 +99,7 @@ public class EventService {
                         .changedAt(LocalDateTime.now())
                         .startTime(LocalDateTime.now())
                         .wasPostponed(false)
-                        .nextEventTime(LocalDateTime.now().plusMinutes(postponeMinutes))
+                        .nextEventTime(LocalDateTime.now().plusMinutes(requestDto.getFrequency()))
                         .lastHappened(LocalDateTime.now())
                         .build()
         ).map(responseMapper::mapEntityToResponse);

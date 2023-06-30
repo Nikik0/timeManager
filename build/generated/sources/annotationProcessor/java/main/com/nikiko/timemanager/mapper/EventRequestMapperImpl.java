@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2023-06-30T14:25:40+1000",
+    date = "2023-07-01T08:55:52+1000",
     comments = "version: 1.4.2.Final, compiler: IncrementalProcessingEnvironment from gradle-language-java-7.6.1.jar, environment: Java 17.0.5 (SAP SE)"
 )
 @Component
@@ -29,6 +29,7 @@ public class EventRequestMapperImpl implements EventRequestMapper {
         eventEntity.enabled( requestDto.isEnabled() );
         eventEntity.shortDescription( requestDto.getShortDescription() );
         eventEntity.fullDescription( requestDto.getFullDescription() );
+        eventEntity.frequency( requestDto.getFrequency() );
 
         return eventEntity.build();
     }
@@ -48,6 +49,7 @@ public class EventRequestMapperImpl implements EventRequestMapper {
         eventRequestDto.setEnabled( entity.isEnabled() );
         eventRequestDto.setShortDescription( entity.getShortDescription() );
         eventRequestDto.setFullDescription( entity.getFullDescription() );
+        eventRequestDto.setFrequency( entity.getFrequency() );
 
         return eventRequestDto;
     }

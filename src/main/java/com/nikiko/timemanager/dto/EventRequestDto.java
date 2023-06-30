@@ -19,4 +19,5 @@ public class EventRequestDto {
     //private LocalDateTime createdAt;
     //private LocalDateTime changedAt;
     private Long owner_id;
+    private Long frequency;
 }

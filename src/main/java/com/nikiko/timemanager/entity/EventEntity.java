@@ -59,4 +59,5 @@ public class EventEntity {
     private boolean wasPostponed;
     @Column("last_happened")
     private LocalDateTime lastHappened;
+    private Long frequency;
 }

@@ -23,4 +23,5 @@ public class EventDto {
     private LocalDateTime nextEventTime;
     private boolean wasPostponed;
     private LocalDateTime lastHappened;
+    private Long frequency;
 }

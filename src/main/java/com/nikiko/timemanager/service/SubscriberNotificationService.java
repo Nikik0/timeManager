@@ -169,7 +169,16 @@ public class SubscriberNotificationService {
             }).subscribe();
         }
     }
+    /*
+    private void updateEventAfterSending(EventEntity event){
+        event.toBuilder()
+                .lastHappened(event.getNextEventTime())
+                .nextEventTime();
 
+        if (event.isWasPostponed())
+            event.setNextEventTime(event.getNextEventTime().plusMinutes(event.));
+    }
+    */
     private SubscriberHealthCheckDto mapSubToFailedHC(SubscriberEntity subscriberEntity){
         SubscriberHealthCheckDto hc = new SubscriberHealthCheckDto();
         hc.toBuilder()
