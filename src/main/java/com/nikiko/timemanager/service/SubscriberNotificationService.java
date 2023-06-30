@@ -10,6 +10,7 @@ import com.nikiko.timemanager.mapper.SubscriberMapper;
 import com.nikiko.timemanager.repository.SubscriberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
@@ -62,189 +63,7 @@ public class SubscriberNotificationService {
 
 
     //todo need to implement event methods and staff for correcting and updating time for triggering event
-    //todo this should collect all the needed data, parse it and invoke sendEvents method
-    public void magicHappening() throws InterruptedException {
-        //Select subscribers.id as "sub_id", subscribers.enabled as "sub_enabled", Events.id as "event_id" from subscribers left join events on subscribers."userId" = Events.owner_id
-        /*
-        такого вида запросом забрать данные, мапнуть их в какую то дто скорее всего, потом также стримом запихнуть в мапу
-        по сути метод будет почти как ниже
-         */
-        //Set<Long> subIds = new HashSet<>();
-        /*
-        Set<Long> userIds = new HashSet<>();
-        List<EventEntity> events = new ArrayList<>();
-        List<SubscriberEntity> subs = new ArrayList<>();
 
-         */
-        /*
-        Map<Long, List<EventEntity>> eventMap = new HashMap<>(); //owner + his events
-        eventService.getEventEntitiesByNextEventTime(LocalDateTime.now()).flatMap(eventEntity -> {
-                    if (eventMap.containsKey(eventEntity.getOwnerId()))
-                    {
-                        List<EventEntity> eventEntities = eventMap.get(eventEntity.getOwnerId());
-                        eventEntities.add(eventEntity);
-                        eventMap.put(eventEntity.getOwnerId(), eventEntities);
-                    }
-                    else
-                        eventMap.put(eventEntity.getOwnerId(), Arrays.asList(eventEntity));
-                    return Mono.just(eventEntity);
-                }
-        ).subscribe();*/
-
-        //test date format
-        UserRequestDto us = new UserRequestDto();
-        us.setId(6L);
-        eventService.getAll(us).flatMap(e -> {
-            log.info("event time from db " + e.getNextEventTime().toString());
-            Mono.just(e);
-            return Mono.just(e);
-        }).subscribe();
-
-        LocalDateTime placeholderTime = LocalDateTime.of(2000,1,1,1,1);
-        log.info("placeholder time " + placeholderTime.toString());
-        //todo placeholderTime should be changed to now()
-        /*
-        eventService.getEventEntitiesByNextEventTime(placeholderTime).flatMap(eventEntity -> {
-                    userIds.add(eventEntity.getOwnerId());
-                    events.add(eventEntity);
-                    log.info("event is happening rn " + eventEntity.getId());
-                    return Mono.just(eventEntity);
-                }
-                ).subscribe(this::tt);
-                //
-                eventService.getEventEntitiesByNextEventTime(placeholderTime).flatMap(eventEntity -> {
-                    userIds.add(eventEntity.getOwnerId());
-                    events.add(eventEntity);
-                    log.info("event is happening rn " + eventEntity.getId());
-
-                    return Mono.just(userIds);
-                }
-                ).flatMap(userIdList -> {
-                    log.info("userid list " + userIdList);
-            for (Long id: userIdList) {
-                subscriberRepository.getSubscriberEntitiesByUserId(id).flatMap(subEntity -> {
-                    log.info("sub added to list " + subEntity.getId());
-                    //subIds.add(subEntity.getId());
-                    subs.add(subEntity);
-                    return Mono.just(subEntity);
-                });
-            }
-            return Mono.just(Arrays.asList(subs, events));
-        }).subscribe(this::tt);
-         */
-        /*
-        List<Long> userIds = new ArrayList<>();
-        List<EventEntity> events = new ArrayList<>();
-        eventService.getEventEntitiesByNextEventTime(placeholderTime).flatMap(e -> {
-            events.add(e);
-            if (!userIds.contains(e.getOwnerId())){
-                userIds.add(e.getOwnerId());
-                subscriberRepository.getSubscriberEntitiesByUserId(e.getOwnerId()).flatMap(sub -> {
-                    return Mono.just(Arrays.asList(
-                            sub,
-                            events.stream()
-                                    .filter(eve -> Objects.equals(eve.getOwnerId(), sub.getUserId()))
-                                    .collect(Collectors.toList())
-                    ));                                     //todo <- this is disgusting and needs refactoring, should investigate usage of tuple
-                }).subscribe(this::sendEvents);
-            }
-            return Mono.just(e);
-        }).subscribe();
-        */
-
-        //Thread.sleep(1000);
-//        log.error("--------------------------");
-//        log.info("subs are " + subs);
-//        log.info("events are " + eventsGlobal);
-//        log.info("userIds are " + userIdsGlobal);
-//        log.error("--------------------------");
-        /*
-        //todo fors should be combined with reactive smh threads are just workaround for now
-        Thread.sleep(1000);
-        for (Long id: userIds) {
-            subscriberRepository.getSubscriberEntitiesByUserId(id).flatMap(subEntity -> {
-                log.info("sub added to list " + subEntity.getId());
-                //subIds.add(subEntity.getId());
-                subs.add(subEntity);
-
-                return Mono.just(subEntity);
-            } ).subscribe();
-        }
-
-
-        Thread.sleep(1000);
-        for (SubscriberEntity sub: subs) {
-            for (EventEntity event: events) {
-                if (sub.getUserId() == event.getOwnerId()){
-                    log.info("sub id to map " + sub.getId() + " event id to map " + event.getId());
-                    //deliveryList.put(sub.getId(), new AbstractMap.SimpleEntry<>( events.stream().map(e -> eventResponseMapper.mapEntityToResponse(e)).collect(Collectors.toList()), 0));
-                }
-            }
-        }
-        log.info("result map for notification " + deliveryList.toString());
-        //map subId, list<event>, counter
-        //      ^^^^^^^
-        //    these two only connect through userId
-        */
-    }
-
-    private void testInnerSubsriber(List<Object> objects) {
-        log.error("-----------------PAGMAN---------------");
-        SubscriberEntity sub = (SubscriberEntity) objects.get(0);
-        List<EventEntity> events = (List<EventEntity>) objects.get(1);
-        log.error("+++ subs " + sub);
-        log.error("+++ events " + events);
-    }
-
-    private void mapProcessing(List<List<? extends Object>> lists) {
-//        log.error("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-
-        List<SubscriberEntity> subs = (List<SubscriberEntity>) lists.get(0);
-        List<EventEntity> events = (List<EventEntity>) lists.get(1);
-//        log.error("subs " + subs);
-//        log.error("events " + events);
-
-
-        for (SubscriberEntity sub: subs) {
-            for (EventEntity event: events) {
-                if (sub.getUserId() == event.getOwnerId()){
-//                    log.info("sub id to map " + sub.getId() + " event id to map " + event.getId());
-                    deliveryList.put(sub.getId(), new AbstractMap.SimpleEntry<>( events.stream().map(e -> eventResponseMapper.mapEntityToResponse(e)).collect(Collectors.toList()), 0));
-                }
-            }
-        }
-//        log.error("TADAAAAAAA this is final map to send " + deliveryList);
-//        log.error("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-    }
-    private Set<Long> userIdsGlobal= new HashSet<>();
-    private List<EventEntity> eventsGlobal = new ArrayList<>();
-    private List<SubscriberEntity> subsGlobal = new ArrayList<>();
-
-    private EventEntity firstMethodInChain(EventEntity entity) {
-        userIdsGlobal.add(entity.getOwnerId());
-        eventsGlobal.add(entity);
-        return entity;
-    }
-
-    private void tt(List<List<? extends Object>> lists) {
-        List<SubscriberEntity> subs = (List<SubscriberEntity>) lists.get(0);
-        List<EventEntity> events = (List<EventEntity>) lists.get(1);
-        log.info("TT LIST SUBS " + subs);
-        log.info("TT LIST EVENTS " + events);
-        for (SubscriberEntity sub: subs) {
-            for (EventEntity event: events) {
-                if (sub.getUserId() == event.getOwnerId()){
-                    log.info("sub id to map " + sub.getId() + " event id to map " + event.getId());
-                    deliveryList.put(sub.getId(), new AbstractMap.SimpleEntry<>( events.stream().map(e -> eventResponseMapper.mapEntityToResponse(e)).collect(Collectors.toList()), 0));
-                }
-            }
-        }
-        log.error("THE TT METHOD MAP" + deliveryList);
-    }
-
-
-    private void tt(EventEntity entity) {
-    }
 
     //todo this is a description of workflow for event time increase via notification
     /*
@@ -343,36 +162,57 @@ public class SubscriberNotificationService {
         log.info("+++ events" + events);
 
         for (EventEntity event: events) {
+            log.info("now sending event id is " + event.getId());
             retryIncrease(sub);
             sendEvent(sub,eventResponseMapper.mapEntityToResponse(event)).flatMap(health ->{
                 if (health.isDeliverySuccessful())
                     removeDeliveredEvents(sub,eventResponseMapper.mapEntityToResponse(event));
                 return Mono.just(health);
             }).subscribe();
+            log.info("sending completed, should change the event now");
+            updateEventAfterSending(event);
         }
     }
+    @Value("${settings.delayEventTime}")
+    private Long postponeMinutes;
+    private void updateEventAfterSending(EventEntity event){
+//        event.toBuilder()
+//                .lastHappened(event.getNextEventTime())
+//                .nextEventTime();
+        log.info("Update event invoked");
+        //todo this could lead to bugs if the frequency is less than postpone time, testing required
+        eventService.saveEntity(
+                event.toBuilder()
+                        .lastHappened(event.getNextEventTime())
+                        .wasPostponed(false)
+                        .nextEventTime(event.getNextEventTime().plusMinutes(event.getFrequency()).minusMinutes(postponeMinutes))
+                        .build()
+        ).subscribe();
+        log.info("Updating event " + event.getId() + " nextTime is " + event.getNextEventTime() + " next event should be " +
+                event.getNextEventTime().plusMinutes(event.getFrequency()).minusMinutes(postponeMinutes));
+        log.info("Next event determined like this: " + event.getNextEventTime() + " + "
+        + event.getFrequency() + " - " + postponeMinutes);
+        /*LocalDateTime nextEventTime = event.getNextEventTime().plusMinutes(event.getFrequency()).minusMinutes(postponeMinutes);
+        if (nextEventTime.isBefore(LocalDateTime.now()))
 
-    //method names are placeholders
-    public void sendEventsOld(SubscriberEntity sub, Flux<EventDto> events){
-        events.flatMap(event -> {
-            retryIncrease(sub);
-            sendEvent(sub, event).flatMap(health -> {
-                if (health.isDeliverySuccessful())
-                    removeDeliveredEvents(sub, event);
-                return Mono.just(health);
-            });
-            return Mono.just(event);
-        });
+        if (event.isWasPostponed())
+            event.setNextEventTime(event.getNextEventTime().plusMinutes(event.getFrequency()));
+        */
     }
+
+
+
     /*
-    public void sendEventCheck(SubscriberEntity sub, EventDto eventDto){
-        sendEvent(sub, eventDto).flatMap(health -> {
-            if (health.isDeliverySuccessful()){
-                removeDeliveredEvents(sub, eventDto);
-            }
-            return Mono.just(health);
-        });
-    }*/
+    e1 10:30 freq 30
+    e2 11:00 freq 60
+    e3 11:30 freq 20
+    e4 12:00
+    e5 13:00
+
+    was 11:00 should happen in 12:00
+    postponed by 1.5h so next event in
+
+     */
 
     private SubscriberHealthCheckDto mapSubToFailedHC(SubscriberEntity subscriberEntity){
         SubscriberHealthCheckDto hc = new SubscriberHealthCheckDto();

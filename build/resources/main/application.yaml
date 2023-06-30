@@ -18,7 +18,7 @@ logging:
     io.r2dbc.postgresql.PARAM: DEBUG
 
 settings:
-  delayEventTime: 3600
+  delayEventTime: 30
 
 jwt:
   password:

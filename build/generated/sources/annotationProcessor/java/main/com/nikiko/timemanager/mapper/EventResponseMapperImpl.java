@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2023-06-30T14:25:41+1000",
+    date = "2023-07-01T08:55:52+1000",
     comments = "version: 1.4.2.Final, compiler: IncrementalProcessingEnvironment from gradle-language-java-7.6.1.jar, environment: Java 17.0.5 (SAP SE)"
 )
 @Component
@@ -34,6 +34,7 @@ public class EventResponseMapperImpl implements EventResponseMapper {
         eventDto.setNextEventTime( entity.getNextEventTime() );
         eventDto.setWasPostponed( entity.isWasPostponed() );
         eventDto.setLastHappened( entity.getLastHappened() );
+        eventDto.setFrequency( entity.getFrequency() );
 
         return eventDto;
     }
@@ -58,6 +59,7 @@ public class EventResponseMapperImpl implements EventResponseMapper {
         eventEntity.nextEventTime( eventDto.getNextEventTime() );
         eventEntity.wasPostponed( eventDto.isWasPostponed() );
         eventEntity.lastHappened( eventDto.getLastHappened() );
+        eventEntity.frequency( eventDto.getFrequency() );
 
         return eventEntity.build();
     }
