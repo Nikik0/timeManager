@@ -1,22 +1,37 @@
+//plugins {
+////	id 'java'
+//	id "org.springframework.boot" version "${springbootVersion}"
+//	id 'io.spring.dependency-management' version "${dependencyManagerVersion}"
+//}
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version "$springbootVersion"
-	id 'io.spring.dependency-management' version "$dependencyManagerVersion"
+	id "org.springframework.boot" version '3.0.6'
+	id 'io.spring.dependency-management' version '1.1.0'
 }
-
 group = 'com.nikiko'
 version = '1.0.0'
-sourceCompatibility = '17'
+//sourceCompatibility = '17'
 
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
 	}
 }
-
 repositories {
 	mavenCentral()
 }
+
+java {
+	toolchain {
+		languageVersion.set(JavaLanguageVersion.of(17))
+	}
+}
+
+//if (!System.getProperty("java.home").contains(java.toolchain.languageVersion.get().toString())) {
+//	def msg = ('JDK in this project: ' + System.getProperty('java.home') + '\n' +
+//			'In this project, you should use JDK-' + java.toolchain.languageVersion.get())
+//	throw new GradleException(msg)
+//}
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
@@ -44,6 +59,11 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'io.projectreactor:reactor-test'
 }
+
+//compileOptions {
+//	sourceCompatibility 17
+//	targetCompatibility 17
+//}
 
 tasks.named('test') {
 	useJUnitPlatform()
