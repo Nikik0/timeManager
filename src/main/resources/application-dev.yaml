@@ -1,0 +1,22 @@
+server:
+  port: 8083
+
+spring:
+  r2dbc:
+    #url: r2dbc:pool:postgres://host.docker.internal:5432/time_manager_db
+    url: r2dbc:pool:postgres://localhost:5432/time_manager_db
+    username: postgres
+    password: 123
+  flyway:
+    url: jdbc:postgresql://localhost:5432/time_manager_db
+    locations: classpath:db/migration
+    user: ${spring.r2dbc.username}
+    password: ${spring.r2dbc.password}
+
+logging:
+  level:
+    io.r2dbc.postgresql.QUERY: DEBUG
+    io.r2dbc.postgresql.PARAM: DEBUG
+
+settings:
+  delayEventTime: 30
