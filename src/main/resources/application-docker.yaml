@@ -4,7 +4,7 @@ server:
 spring:
   r2dbc:
     #url: r2dbc:pool:postgres://host.docker.internal:5432/time_manager_db
-    url: r2dbc:pool:postgres://localhost:5432/time_manager_db
+    url: r2dbc:pool:postgres://192.168.0.3:5432/time_manager_db
     username: postgres
     password: 123
   flyway:
