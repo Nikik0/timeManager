@@ -17,6 +17,24 @@
 
 FROM eclipse-temurin:17-jdk-alpine
 VOLUME /tmp
-ARG JAR_FILE
+ARG JAR_FILE=build/libs/timemanager-1.0.0.jar
 COPY ${JAR_FILE} /app.jar
 ENTRYPOINT ["java","-jar","/app.jar"]
+
+
+
+
+#FROM eclipse-temurin:17-jdk-alpine AS build
+#WORKDIR /workspace/app
+#
+#COPY . /workspace/app
+#RUN target=/root/.gradle ./gradlew clean build
+#RUN mkdir -p build/dependency && (cd build/dependency; jar -xf ../libs/*-1.0.0.jar)
+#
+#FROM eclipse-temurin:17-jdk-alpine
+#VOLUME /tmp
+#ARG DEPENDENCY=/workspace/app/build/dependency
+#COPY --from=build ${DEPENDENCY}/BOOT-INF/lib /app/lib
+#COPY --from=build ${DEPENDENCY}/META-INF /app/META-INF
+#COPY --from=build ${DEPENDENCY}/BOOT-INF/classes /app
+#ENTRYPOINT ["java","-cp","app:app/lib/*","TimemanagerApplication.class"]
