@@ -1,5 +1,6 @@
 package com.nikiko.timemanager.entity;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.ToString;
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
+@AllArgsConstructor
 @Builder(toBuilder = true)
 @Table("Users")
 public class UserEntity {
