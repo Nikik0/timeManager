@@ -5,6 +5,7 @@ import com.nikiko.timemanager.dto.UserDto;
 import com.nikiko.timemanager.dto.UserRequestDto;
 import com.nikiko.timemanager.entity.UserEntity;
 import com.nikiko.timemanager.entity.UserRole;
+import com.nikiko.timemanager.exception.ApiException;
 import com.nikiko.timemanager.mapper.UserRequestMapper;
 import com.nikiko.timemanager.mapper.UserResponseMapper;
 import com.nikiko.timemanager.repository.UserRepository;
@@ -26,7 +27,6 @@ public class UserService {
 
     public Mono<UserDto> save(UserRequestDto newUser){
         log.info("saving user "+ newUser.getId());
-        log.info("checking if id is null " + (newUser.getId() == null));
         return userRepository.save(requestMapper.mapFromRequestToEntity(newUser)
                     .toBuilder()
                     .userRole(UserRole.USER)
@@ -34,39 +34,32 @@ public class UserService {
                     .updatedAt(LocalDateTime.now())
                     .blocked(false)
                     .build()
-        ).map(responseMapper::mapFromEntityToResponse);
+        ).map(responseMapper::mapFromEntityToResponse).switchIfEmpty(Mono.error(new ApiException("Failed to save event", "500")));
     }
 
     public Mono<UserDto> findById(Long id){
-        return userRepository.findById(id).map(responseMapper::mapFromEntityToResponse);
+        return userRepository.findById(id).map(responseMapper::mapFromEntityToResponse).switchIfEmpty(Mono.error(new ApiException("User was not found", "404")));
     }
 
     public void delete(UserRequestDto userRequestDto){
-        //TODO надо добавить каскадное удаление
-        //log.info(userRequestDto.toString());
-        //userRepository.deleteById(userRequestDto.getId());
-        //userRepository.findById(userRequestDto.getId()).doOnSuccess(user -> userRepository.delete(user)).subscribe();
+        //TODO modify db to enable cascade deletion for all the entities depending on deleted user (so delete both events (? leave for logging purpose) and subs)
         userRepository.deleteById(userRequestDto.getId()).subscribe();
-        //log.info("this should be done now smh");
     }
 
-    public Mono<UserDto> change(UserRequestDto user){
+    public Mono<UserDto> change(UserRequestDto user) {
         log.info("changing user " + user.getId());
-         return userRepository.findById(user.getId()).flatMap(
-                userEntity -> {
-                    log.info("user was changed successfully " + userEntity.toString());
-                    return userRepository.save(
-                            userEntity.toBuilder()
+        return userRepository.findById(user.getId()).flatMap(
+                userEntity -> userRepository.save(
+                        userEntity.toBuilder()
                                 .name(user.getName())
                                 .password(user.getPassword())
                                 .updatedAt(LocalDateTime.now())
                                 .build()
-                    );
-                }
+                )
         ).map(responseMapper::mapFromEntityToResponse);
     }
 
-    public Flux<UserDto> findAll(){
-        return userRepository.findAll().map(responseMapper::mapFromEntityToResponse);
-    }
+//    public Flux<UserDto> findAll(){
+//        return userRepository.findAll().map(responseMapper::mapFromEntityToResponse);
+//    }
 }
