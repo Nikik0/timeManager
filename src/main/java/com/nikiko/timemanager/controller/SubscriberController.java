@@ -1,5 +1,6 @@
 package com.nikiko.timemanager.controller;
 
+import com.nikiko.timemanager.dto.EventDto;
 import com.nikiko.timemanager.dto.EventRequestDto;
 import com.nikiko.timemanager.dto.SubscriberRequestDto;
 import com.nikiko.timemanager.dto.SubscriberResponseDto;
@@ -49,19 +50,14 @@ public class SubscriberController {
         return notificationService.getSubscribersInfo(requestDto);
     }
 
-    @PostMapping("/test")
-    public Mono<String> testCall() throws InterruptedException {
-        notificationService.beginNotificationSending(true);
-        return Mono.just("Test call in sub controller successful");
-    }
+//    @PostMapping("/test")
+//    public Mono<String> testCall() throws InterruptedException {
+//        notificationService.beginNotificationSending(true);
+//        return Mono.just("Test call in sub controller successful");
+//    }
 
     @PostMapping("/postpone")
-    public Mono<String> postpone(@RequestBody EventRequestDto eventRequestDto){
-        log.info("SubCont postpone initiated");
-        eventService.postponeEventBetween(eventRequestDto, LocalDateTime.now());
-        //eventService.postponeEventsForUser(eventRequestDto.getOwner_id(), postponeMinutes, LocalDateTime.now());
-        return Mono.just("Event postponed");
+    public Mono<EventDto> postpone(@RequestBody EventRequestDto eventRequestDto){
+        return eventService.postponeEventBetween(eventRequestDto, LocalDateTime.now());
     }
-
-
 }
