@@ -47,15 +47,16 @@ public class UserService {
     }
 
     public Mono<UserDto> change(UserRequestDto user) {
-        log.info("changing user " + user.getId());
         return userRepository.findById(user.getId()).flatMap(
-                userEntity -> userRepository.save(
-                        userEntity.toBuilder()
-                                .name(user.getName())
-                                .password(user.getPassword())
-                                .updatedAt(LocalDateTime.now())
-                                .build()
-                )
+                userEntity -> {
+                    UserEntity updatedUserEntity = userEntity.toBuilder()
+                            .name(user.getName())
+                            .password(user.getPassword())
+                            .updatedAt(LocalDateTime.now())
+                            .build();
+                    userRepository.save(updatedUserEntity).subscribe();
+                    return Mono.just(updatedUserEntity);
+                }
         ).map(responseMapper::mapFromEntityToResponse);
     }
 
