@@ -2,6 +2,7 @@ package com.nikiko.timemanager.controller;
 
 import com.nikiko.timemanager.dto.UserDto;
 import com.nikiko.timemanager.dto.UserRequestDto;
+import com.nikiko.timemanager.exception.ApiException;
 import com.nikiko.timemanager.mapper.UserResponseMapper;
 import com.nikiko.timemanager.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -19,15 +20,13 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/info")
-    public Mono<UserDto> getCustomer(@RequestBody Long id){
-        log.info(id.toString());
-        return userService.findById(id);
+    public Mono<UserDto> getCustomer(@RequestBody UserRequestDto userRequestDto){
+        return userService.findById(userRequestDto.getId());
     }
 
     @PostMapping("/create")
     public Mono<UserDto> create(@RequestBody UserRequestDto requestDto){
-        //TODO обработать не нулевой айди у дто, если не нулевой то выбросить ошибку
-        log.info(requestDto.toString());
+        if (requestDto.getId() != null) return Mono.error(new ApiException("Id should be missing", "400"));
         return userService.save(requestDto);
     }
 
