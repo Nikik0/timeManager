@@ -19,6 +19,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.net.UnknownHostException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -81,17 +82,18 @@ public class SubscriberNotificationService {
     //should delete only few items from list for this sub
     private void removeDeliveredEvents(SubscriberEntity sub, EventDto eventDto){
         //todo check if performs or needs to be reassigned to older map
-        Map.Entry<List<EventDto>, Integer> entry = deliveryList.get(sub.getId());
+        Map.Entry<List<EventDto>, Integer> entry = deliveryList.get(sub.getSubscriberId());
         entry.getKey().remove(eventDto);
         if (entry.getKey().size() == 0)
             deliveryList.remove(sub);
     }
 
     private void retryIncrease(SubscriberEntity sub){
-        if (Objects.equals(deliveryList.get(sub.getId()).getValue(), MAX_RETRIES_FOR_SUBSCRIBER))
-            deliveryList.remove(sub.getId());
+        if (!deliveryList.containsKey(sub)) return;
+        if (Objects.equals(deliveryList.get(sub.getSubscriberId()).getValue(), MAX_RETRIES_FOR_SUBSCRIBER))
+            deliveryList.remove(sub.getSubscriberId());
         else
-            deliveryList.get(sub.getId()).setValue(deliveryList.get(sub.getId()).getValue() + 1);
+            deliveryList.get(sub.getSubscriberId()).setValue(deliveryList.get(sub.getSubscriberId()).getValue() + 1);
     }
 
     /*todo method should be concurrent, inside sendEvents should be invoked once every minute
@@ -146,7 +148,7 @@ public class SubscriberNotificationService {
         List<EventEntity> events = (List<EventEntity>) objects.get(1);
         log.info("+++ subs " + sub);
         log.info("+++ events" + events);
-        deliveryList.put(sub.getId(),
+        deliveryList.put(sub.getSubscriberId(),
                 new AbstractMap.SimpleEntry<>(
                     events.stream().map(eventResponseMapper::mapEntityToResponse).collect(Collectors.toList()),
                     0
@@ -155,14 +157,8 @@ public class SubscriberNotificationService {
     }
 
     private void sendEvents(SubscriberEntity sub, List<EventEntity> events){
-        log.info("-----------------PAGMAN---------------");
-        //SubscriberEntity sub = (SubscriberEntity) objects.get(0);
-        //List<EventEntity> events = (List<EventEntity>) objects.get(1);
-        log.info("+++ subs " + sub);
-        log.info("+++ events" + events);
-
         for (EventEntity event: events) {
-            log.info("now sending event id is " + event.getId());
+            log.info("now sending, event id is " + event.getId());
             retryIncrease(sub);
             sendEvent(sub,eventResponseMapper.mapEntityToResponse(event)).flatMap(health ->{
                 if (health.isDeliverySuccessful())
@@ -217,7 +213,7 @@ public class SubscriberNotificationService {
     private SubscriberHealthCheckDto mapSubToFailedHC(SubscriberEntity subscriberEntity){
         SubscriberHealthCheckDto hc = new SubscriberHealthCheckDto();
         hc.toBuilder()
-                .subscriberId(subscriberEntity.getId())
+                .subscriberId(subscriberEntity.getSubscriberId())
                 .enabled(subscriberEntity.isEnabled())
                 .userId(subscriberEntity.getUserId())
                 .endpoint(subscriberEntity.getEndpoint())
@@ -227,20 +223,26 @@ public class SubscriberNotificationService {
     }
 
 
-    //todo consider moving it to other class since endpoint calls will be used multiple times, add onErrorResume to this method call
+    //todo consider moving it to other class since endpoint calls will be used multiple times
     public Mono<SubscriberHealthCheckDto> sendEvent(SubscriberEntity sub, EventDto eventDto){
         log.info("Starting sending events to subs\n-----------------------------------");
 
         try {
-            //todo check response time, if more than 30 sec or response is bad or succ status isn't good then put the input dto to some kind of list and check always
-            //todo sending should be reworked to be working with incorrect endpoints and shit
             return webClient
                     .post()
                     .uri(sub.getEndpoint())
                     .bodyValue(eventDto)
                     .retrieve()
                     .onStatus(httpStatusCode -> httpStatusCode.isError(), clientResponse -> Mono.error(new ApiException("bruh","400")))
-                    .bodyToMono(SubscriberHealthCheckDto.class);
+                    .bodyToMono(SubscriberHealthCheckDto.class)
+                    .onErrorResume(e -> {
+                        if (e instanceof UnknownHostException){
+                            log.error("Unknown host " + sub.getEndpoint() + " , couldn't connect to provided host");
+                        } else {
+                            log.error("Unknown error while sending events to endpoint " + sub.getEndpoint());
+                        }
+                        return Mono.just(mapSubToFailedHC(sub));
+                    });
             //return Mono.just(mapSubToFailedHC(sub));
         }catch (RuntimeException e){
             log.error("Error occurred " + e.getMessage() + " error was caused by " + e.getCause());
@@ -261,12 +263,18 @@ public class SubscriberNotificationService {
 */
 
     public Mono<SubscriberResponseDto> subscribe(SubscriberRequestDto requestDto) {
-        return subscriberRepository.findById(requestDto.getSubscriberId()).flatMap(subscriberEntity ->
-            subscriberRepository.save(subscriberEntity
-                                    .toBuilder()
-                                    .enabled(true)
-                                    .build())
-        ).map(subscriberMapper::mapEntityToResponse);
+      return subscriberRepository.findById(requestDto.getSubscriberId()).flatMap(subscriberEntity -> {
+                    SubscriberEntity updatedEntity = subscriberEntity
+                            .toBuilder()
+                            .enabled(true)
+                            .build();
+                    subscriberRepository.save(updatedEntity).subscribe();
+                    return Mono.just(updatedEntity);
+                }
+        ).map(subscriberMapper::mapEntityToResponse).flatMap(subscriberResponseDto -> {
+            subscriberResponseDto.setSuccessful(true);
+            return Mono.just(subscriberResponseDto);
+        });
     }
 
     public Mono<SubscriberResponseDto> unsubscribe(SubscriberRequestDto requestDto) {
@@ -275,7 +283,10 @@ public class SubscriberNotificationService {
                                         .toBuilder()
                                         .enabled(false)
                                         .build())
-        ).map(subscriberMapper::mapEntityToResponse);
+        ).map(subscriberMapper::mapEntityToResponse).flatMap(subscriberResponseDto -> {
+            subscriberResponseDto.setSuccessful(true);
+            return Mono.just(subscriberResponseDto);
+        });
     }
 
     public Mono<SubscriberResponseDto> create(SubscriberRequestDto requestDto) {
@@ -284,7 +295,6 @@ public class SubscriberNotificationService {
     }
 
     public Mono<Void> delete(SubscriberRequestDto requestDto) {
-        //Todo refactor to make it return smth that makes sense
         return subscriberRepository.deleteById(requestDto.getSubscriberId());
     }
 
