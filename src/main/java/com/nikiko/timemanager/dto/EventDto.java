@@ -19,7 +19,7 @@ public class EventDto {
     private String fullDescription;
     private LocalDateTime createdAt;
     private LocalDateTime changedAt;
-    private Long owner_id;
+    private Long ownerId;
     private LocalDateTime nextEventTime;
     private boolean wasPostponed;
     private LocalDateTime lastHappened;
