@@ -3,6 +3,7 @@ package com.nikiko.timemanager.controller;
 import com.nikiko.timemanager.dto.EventDto;
 import com.nikiko.timemanager.dto.EventRequestDto;
 import com.nikiko.timemanager.dto.UserRequestDto;
+import com.nikiko.timemanager.exception.ApiException;
 import com.nikiko.timemanager.service.EventService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,22 +19,9 @@ import reactor.core.publisher.Mono;
 public class EventController {
     private final EventService eventService;
 
-    @PostMapping("/current")
-    public Mono<String> getCurrentEvent(){
-        //todo only for testing, needs to be reworked later
-        log.info("post call successful");
-        return eventService.call();
-    }
-
-    @GetMapping("/testcall")
-    public Mono<String> testingCall(){
-
-        return Mono.just("call was successful");
-    }
-
     @PostMapping("/get")
-    public Mono<EventDto> getSingle(@RequestBody Long id){
-        return eventService.getSingle(id);
+    public Mono<EventDto> getSingle(@RequestBody UserRequestDto userRequestDto){
+        return eventService.getSingle(userRequestDto.getId());
     }
 
     @PostMapping("/all")
@@ -52,9 +40,10 @@ public class EventController {
     }
     @PostMapping("/create")
     public Mono<EventDto> createEvent(@RequestBody EventRequestDto requestDto){
+        if (requestDto.getId() != null) return Mono.error(new ApiException("Id should be missing", "400"));
         return eventService.create(requestDto);
     }
-    @PostMapping("/extend")
+    @PostMapping("/extend") //todo placeholder, should be changed or deleted
     public Mono<EventDto> extendEvent(@RequestBody EventRequestDto requestDto){
         return eventService.extend(requestDto);
     }
