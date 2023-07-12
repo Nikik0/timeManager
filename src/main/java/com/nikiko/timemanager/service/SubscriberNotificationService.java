@@ -22,6 +22,9 @@ import reactor.core.publisher.Mono;
 import java.net.UnknownHostException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -81,6 +84,7 @@ public class SubscriberNotificationService {
 
     //should delete only few items from list for this sub
     private void removeDeliveredEvents(SubscriberEntity sub, EventDto eventDto){
+        log.info("delivered event " + eventDto + " was removed from delivery list");
         //todo check if performs or needs to be reassigned to older map
         Map.Entry<List<EventDto>, Integer> entry = deliveryList.get(sub.getSubscriberId());
         entry.getKey().remove(eventDto);
@@ -116,13 +120,28 @@ public class SubscriberNotificationService {
     @EventListener(ApplicationReadyEvent.class)
     public void beginSendingNotificationsOnStartup(){
         LocalDateTime placeholderTime = LocalDateTime.of(2000,1,1,1,1);
+        //todo placeholderTime should be changed to now()
+        Runnable sendNotificationsRunnable = () -> startEventNotificationChain(placeholderTime);
+        ScheduledExecutorService executorService = new ScheduledThreadPoolExecutor(1);
+        executorService.scheduleAtFixedRate(sendNotificationsRunnable, 0 ,1, TimeUnit.MINUTES);
+        //placeholderTime.plusMinutes(1);
+        log.info("placeholder time " + placeholderTime);
+        //startEventNotificationChain(placeholderTime);
+    }
+
+    /*
+        @EventListener(ApplicationReadyEvent.class)
+    public void beginSendingNotificationsOnStartup(){
+        LocalDateTime placeholderTime = LocalDateTime.of(2000,1,1,1,1);
         //placeholderTime.plusMinutes(1);
         log.info("placeholder time " + placeholderTime);
         //todo placeholderTime should be changed to now()
         startEventNotificationChain(placeholderTime);
     }
+     */
 
     private void startEventNotificationChain(LocalDateTime currentTime){
+        log.info("starting event sending at " + currentTime + " called by separate thread");
         List<Long> userIds = new ArrayList<>();
         List<EventEntity> events = new ArrayList<>();
         eventService.getEventEntitiesByNextEventTime(currentTime).flatMap(e -> {
@@ -160,13 +179,14 @@ public class SubscriberNotificationService {
         for (EventEntity event: events) {
             log.info("now sending, event id is " + event.getId());
             retryIncrease(sub);
+            updateEventAfterSending(event);
             sendEvent(sub,eventResponseMapper.mapEntityToResponse(event)).flatMap(health ->{
+                log.info("sending was for sub " + sub + " mapped hc " + mapSubToFailedHC(sub));
+                log.info(" health from sending " + health);
                 if (health.isDeliverySuccessful())
                     removeDeliveredEvents(sub,eventResponseMapper.mapEntityToResponse(event));
                 return Mono.just(health);
             }).subscribe();
-            log.info("sending completed, should change the event now");
-            updateEventAfterSending(event);
         }
     }
     @Value("${settings.delayEventTime}")
@@ -181,7 +201,9 @@ public class SubscriberNotificationService {
                 event.toBuilder()
                         .lastHappened(event.getNextEventTime())
                         .wasPostponed(false)
-                        .nextEventTime(event.getNextEventTime().plusMinutes(event.getFrequency()).minusMinutes(postponeMinutes))
+                        .nextEventTime(event.isWasPostponed() ?
+                                event.getNextEventTime().plusMinutes(event.getFrequency()).minusMinutes(postponeMinutes)
+                                : event.getNextEventTime().plusMinutes(event.getFrequency()))
                         .build()
         ).subscribe();
         log.info("Updating event " + event.getId() + " nextTime is " + event.getNextEventTime() + " next event should be " +
@@ -212,21 +234,19 @@ public class SubscriberNotificationService {
 
     private SubscriberHealthCheckDto mapSubToFailedHC(SubscriberEntity subscriberEntity){
         SubscriberHealthCheckDto hc = new SubscriberHealthCheckDto();
-        hc.toBuilder()
+        return hc.toBuilder()
                 .subscriberId(subscriberEntity.getSubscriberId())
                 .enabled(subscriberEntity.isEnabled())
                 .userId(subscriberEntity.getUserId())
                 .endpoint(subscriberEntity.getEndpoint())
                 .deliverySuccessful(false)
                 .build();
-        return hc;
     }
 
 
     //todo consider moving it to other class since endpoint calls will be used multiple times
     public Mono<SubscriberHealthCheckDto> sendEvent(SubscriberEntity sub, EventDto eventDto){
         log.info("Starting sending events to subs\n-----------------------------------");
-
         try {
             return webClient
                     .post()
@@ -237,15 +257,14 @@ public class SubscriberNotificationService {
                     .bodyToMono(SubscriberHealthCheckDto.class)
                     .onErrorResume(e -> {
                         if (e instanceof UnknownHostException){
-                            log.error("Unknown host " + sub.getEndpoint() + " , couldn't connect to provided host");
+                            log.error("Unknown host " + sub.getEndpoint() + ", couldn't connect to provided host");
                         } else {
-                            log.error("Unknown error while sending events to endpoint " + sub.getEndpoint());
+                            log.error("Error occurred while sending events to endpoint " + sub.getEndpoint());
                         }
                         return Mono.just(mapSubToFailedHC(sub));
                     });
-            //return Mono.just(mapSubToFailedHC(sub));
         }catch (RuntimeException e){
-            log.error("Error occurred " + e.getMessage() + " error was caused by " + e.getCause());
+            log.error("Error occurred " + e.getMessage() + ", error was caused by " + e.getCause());
             return Mono.just(mapSubToFailedHC(sub));
         }
     }
