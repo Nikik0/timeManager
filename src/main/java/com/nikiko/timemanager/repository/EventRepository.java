@@ -20,6 +20,7 @@ public interface EventRepository extends R2dbcRepository<EventEntity, Long> {
 
     //todo untested
     Flux<EventEntity> getEventEntitiesByNextEventTime(LocalDateTime time);
+    Flux<EventEntity> getEventEntitiesByNextEventTimeBetween(LocalDateTime time, LocalDateTime nextTime);
 
     //@Modifying
     //@Query("update events set name = 'changed' where id = 4")
