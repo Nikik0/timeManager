@@ -64,7 +64,7 @@ public class EventService {
                         .createdAt(LocalDateTime.now())
                         .changedAt(LocalDateTime.now())
                         .startTime(LocalDateTime.now())
-                        .wasPostponed(false)
+                        .postponed(false)
                         .nextEventTime(LocalDateTime.now().plusMinutes(requestDto.getFrequency()))
                         .lastHappened(LocalDateTime.now())
                         .build()
@@ -150,7 +150,7 @@ public class EventService {
                                         event.setNextEventTime(
                                                 eventEntity.getNextEventTime().plusMinutes(postponeMinutes)
                                         );
-                                        event.setWasPostponed(true);
+                                        event.setPostponed(true);
                                         log.info("event after postpone " + event);
                                         return Mono.just(event);
                                     })
