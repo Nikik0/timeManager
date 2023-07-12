@@ -18,6 +18,6 @@ public class EventRequestDto {
     private String fullDescription;
     //private LocalDateTime createdAt;
     //private LocalDateTime changedAt;
-    private Long owner_id;
+    private Long ownerId;
     private Long frequency;
 }

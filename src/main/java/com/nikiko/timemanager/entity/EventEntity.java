@@ -33,7 +33,7 @@ public class EventEntity {
     @Column("next_event_time")
     private LocalDateTime nextEventTime;
     @Column("was_postponed")
-    private boolean wasPostponed;
+    private boolean postponed;
     @Column("last_happened")
     private LocalDateTime lastHappened;
     private Long frequency;
