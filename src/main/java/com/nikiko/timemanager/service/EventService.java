@@ -4,10 +4,12 @@ import com.nikiko.timemanager.dto.EventDto;
 import com.nikiko.timemanager.dto.EventRequestDto;
 import com.nikiko.timemanager.dto.UserRequestDto;
 import com.nikiko.timemanager.entity.EventEntity;
+import com.nikiko.timemanager.exception.ApiException;
 import com.nikiko.timemanager.mapper.EventRequestMapper;
 import com.nikiko.timemanager.mapper.EventResponseMapper;
 import com.nikiko.timemanager.repository.EventRepository;
 import com.nikiko.timemanager.repository.SubscriberRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,80 +21,40 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class EventService {
-    private static final String BASE_URL = "http://localhost:8083/timemanager/api/v1";
     private final EventRepository eventRepository;
-
     private final EventRequestMapper requestMapper;
-
     @Value("${settings.delayEventTime}")
     private Long postponeMinutes;
     private final EventResponseMapper responseMapper;
-    //todo needs to be deleted/webclient shit
-    private final WebClient webClient;
 
-    public EventService(EventRepository eventRepository, EventRequestMapper requestMapper, EventResponseMapper responseMapper) {
-        this.eventRepository = eventRepository;
-        this.requestMapper = requestMapper;
-        this.responseMapper = responseMapper;
-        this.webClient = WebClient.builder().baseUrl(BASE_URL).build();
-    }
-
-    @Autowired
-    private SubscriberRepository subscriberRepository;
-
-    public Mono<String> call(){
-        subscriberRepository.findActiveEventsForEachSubscriber().flatMap(s -> {
-            log.info("--------------------\nentry from join");
-            if (s == null) log.error("value was null");
-            log.error(s.getClass().getName());
-            log.info("value = " + s.toString() + "\n------------------");
-            return Mono.just(s);
-        }).subscribe();
-
-        log.info("call initiated");
-        /**/
-        log.info("call was initiated");
-        return this.webClient.get().uri(URL).retrieve().bodyToMono(String.class);
-    }
-
-    private final String URL = "/events/testcall";
-
-
-
-
-
-
-
-
-
-    ///Todo refactor webclient calls
     public Mono<EventDto> getSingle(Long id){
-        log.info("single " + id);
-        return eventRepository.findById(id).map(responseMapper::mapEntityToResponse);
+        return eventRepository.findById(id).map(responseMapper::mapEntityToResponse).switchIfEmpty(Mono.error(new ApiException("Event was not found", "404")));
     }
 
     public Flux<EventDto> getAll(UserRequestDto owner){
-        //log.info(owner.toString());
-        return eventRepository.getEventEntitiesByOwnerId(owner.getId()).map(responseMapper::mapEntityToResponse);
+        return eventRepository.getEventEntitiesByOwnerId(owner.getId()).map(responseMapper::mapEntityToResponse).switchIfEmpty(Mono.error(new ApiException("No events found", "404")));
     }
 
     public Mono<EventEntity> saveEntity(EventEntity event){
-        return eventRepository.save(event);
+        return eventRepository.save(event).switchIfEmpty(Mono.error(new ApiException("Failed to save event", "500")));
     }
 
     public Mono<EventDto> change(EventRequestDto requestDto){
-        return eventRepository.findById(requestDto.getId()).flatMap(event -> eventRepository.save(event.toBuilder()
-                //todo разобраться с ошибками насчет нот нал + скорее всего придется писать свой парсер времени
-                //.startTime(requestDto.getStartTime()) d
-                //.duration(requestDto.getDuration())
-                .enabled(requestDto.isEnabled())
-                .name(requestDto.getName())
-                .fullDescription(requestDto.getFullDescription())
-                .shortDescription(requestDto.getShortDescription())
-                .changedAt(LocalDateTime.now())
-                .build())).map(responseMapper::mapEntityToResponse);
+        return eventRepository.findById(requestDto.getId()).flatMap(event -> {
+            EventEntity updatedEntity = event.toBuilder()
+                    .enabled(requestDto.isEnabled())
+                    .name(requestDto.getName())
+                    .fullDescription(requestDto.getFullDescription())
+                    .shortDescription(requestDto.getShortDescription())
+                    .changedAt(LocalDateTime.now())
+                    .build();
+            eventRepository.save(updatedEntity).subscribe();
+            log.info("event saved " + updatedEntity);
+            return Mono.just(updatedEntity);
+        }).map(responseMapper::mapEntityToResponse);
     }
 
     public Mono<EventDto> create(EventRequestDto requestDto){
@@ -113,12 +75,12 @@ public class EventService {
         return eventRepository.findById(requestDto.getId()).map(responseMapper::mapEntityToResponse);
     }
 
-    public void delete(EventRequestDto requestDto){
-        eventRepository.deleteById(requestDto.getId());
+    public Mono<Void> delete(EventRequestDto requestDto){
+        return eventRepository.deleteById(requestDto.getId());
     }
 
     public Flux<EventEntity> getEventEntitiesByNextEventTime(LocalDateTime currentTime){
-        return eventRepository.getEventEntitiesByNextEventTime(currentTime);
+        return eventRepository.getEventEntitiesByNextEventTimeBetween(currentTime, currentTime.plusMinutes(1));
     }
 
     public Flux<EventEntity> getEventEntitiesByOwnerIdAndNextEventTimeAfter(Long userId, LocalDateTime time){
@@ -139,7 +101,7 @@ public class EventService {
 
     public void postponeEventAfterEvent(EventDto eventDto, LocalDateTime currentTime) {
         eventRepository.saveAll(
-                this.getEventEntitiesByOwnerIdAndNextEventTimeAfter(eventDto.getOwner_id(), currentTime)
+                this.getEventEntitiesByOwnerIdAndNextEventTimeAfter(eventDto.getOwnerId(), currentTime)
                         .flatMap(event -> {
                             if (event.getId() != eventDto.getId())
                                 event.setNextEventTime(
@@ -176,9 +138,9 @@ public class EventService {
 
 
     //this is testing of workflow explained above
-    public void postponeEventBetween(EventRequestDto eventRequestDto, LocalDateTime currentTime) {
+    public Mono<EventDto> postponeEventBetween(EventRequestDto eventRequestDto, LocalDateTime currentTime) {
         log.info("postpone method started");
-        eventRepository.findById(eventRequestDto.getId()).flatMap(eventEntity -> {
+        return eventRepository.findById(eventRequestDto.getId()).flatMap(eventEntity -> {
                     eventRepository.saveAll(
                             eventRepository.getEventEntitiesByOwnerIdAndNextEventTimeBetween(
                                     eventEntity.getOwnerId(), currentTime, eventEntity.getNextEventTime()
@@ -195,7 +157,7 @@ public class EventService {
                     );
                     return Mono.just(eventEntity);
                 }
-        );
+        ).map(responseMapper::mapEntityToResponse);
         /*
         eventRepository.saveAll(
                 eventRepository.getEventEntitiesByOwnerIdAndNextEventTimeBetween(event.getOwner_id(), currentTime,

@@ -28,6 +28,8 @@ import reactor.test.StepVerifier;
 
 import java.time.LocalDateTime;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @ExtendWith(SpringExtension.class)
 public class EventServiceTest {
     @InjectMocks
@@ -118,17 +120,24 @@ public class EventServiceTest {
     public void change_returnMonoEventDto_whenSuccessful(){
         BDDMockito.when(eventRepository.findById(ArgumentMatchers.anyLong()))
                 .thenReturn(Mono.just(eventEntity));
+        EventEntity entity = eventEntity.toBuilder()
+                .name("changed name")
+                .build();
+        eventRequestDto.setName(entity.getName());
         BDDMockito.when(eventRepository.save(Mockito.any(EventEntity.class)))
-                .thenReturn(Mono.just(eventEntity));
+                .thenReturn(Mono.just(entity));
         StepVerifier.create(eventService.change(eventRequestDto))
                 .expectSubscription()
-                .expectNext(eventDto)
+                .consumeNextWith(dto -> {
+                    assertEquals(dto.getId(), entity.getId());
+                    assertEquals(dto.getName(), entity.getName());
+                })
                 .verifyComplete();
     }
     @Test
     @DisplayName("getEventEntitiesByNextEventTime returns Flux with EventEntity if successful")
     public void getEventEntitiesByNextEventTime_returnFluxEventEntities_whenSuccessful(){
-        BDDMockito.when(eventRepository.getEventEntitiesByNextEventTime(Mockito.any(LocalDateTime.class)))
+        BDDMockito.when(eventRepository.getEventEntitiesByNextEventTimeBetween(Mockito.any(LocalDateTime.class),Mockito.any(LocalDateTime.class)))
                 .thenReturn(Flux.just(eventEntity, eventEntity));
         StepVerifier.create(eventService.getEventEntitiesByNextEventTime(LocalDateTime.now()))
                 .expectSubscription()
