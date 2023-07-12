@@ -33,40 +33,10 @@ import java.util.stream.Collectors;
 public class SubscriberNotificationService {
     private final SubscriberMapper subscriberMapper;
     private final SubscriberRepository subscriberRepository;
-    private final UserService userService;
-
-    //todo placeholder methods for health checking subscribers
     private static final String BASE_URL = "http://localhost:8083/timemanager/api/v1";
-    private final String URL = "/events/testcall";
     private final WebClient webClient = WebClient.builder().baseUrl(BASE_URL).build();
-
-    public Mono<SubscriberHealthCheckDto> checkHC(SubscriberEntity subscriberEntity){
-        //todo check response time, if more than 30 sec or response is bad or succ status isn't good then put the input dto to some kind of list and check always
-        return this.webClient.post().uri(URL).bodyValue(subscriberMapper.mapEntityToResponse(subscriberEntity)).retrieve().bodyToMono(SubscriberHealthCheckDto.class);//.subscribe(s -> log.error(s.toString()));
-    }
-
-
-    //map for undelivered if undeliv then add to map< key is SubDto and value is retries
-
-    //или через деку, тогда два метода, один раз в минуту берет все записи из бд и добавляет их в деку
-    //второй берет каждую запись из деки и проверяет ее хс, если все ок то убирает ее из деки, если не ок то оставляет?
-
-    //не понимаю зачем брать всех
-    //скорее всего выбрать всех юзеров у которых есть евент в текущую минуту, если он есть то отправляем уведомление на всех сабов этого юзера, если не получилось то добавляем саба в деку
-    //возможно для такого надо сделать новую дто
-
-    //получить ивенты в минуту - вытащить с них айди юзера - по айди найти всеъ сабов его - отправить сабу дто с ивентами нужными
-    //наверное надо посмотреть какие есть возможные варианты получить только уникальные значения через бд чтоб собрать каждого юзера только один раз
-
-
-    //если неуспешно то скорее всего надо сохранять айди саба в ключ + лист с евентами в значение,
-    // при сохранении проверять есть ли такой саб, если есть то расширять лист а не заменять
-    //возможно надо добавить еще одно значение на количество ретраев, если ретраев больше трешхолда то удалять саба из мапы (считать его мертвым)
-
     private final EventService eventService;
 
-
-    //todo need to implement event methods and staff for correcting and updating time for triggering event
 
 
     //todo this is a description of workflow for event time increase via notification
@@ -82,7 +52,6 @@ public class SubscriberNotificationService {
 
     private Map<Long, Map.Entry<List<EventDto>, Integer>> deliveryList = new HashMap<>();
 
-    //should delete only few items from list for this sub
     private void removeDeliveredEvents(SubscriberEntity sub, EventDto eventDto){
         log.info("delivered event " + eventDto + " was removed from delivery list");
         //todo check if performs or needs to be reassigned to older map
@@ -100,23 +69,6 @@ public class SubscriberNotificationService {
             deliveryList.get(sub.getSubscriberId()).setValue(deliveryList.get(sub.getSubscriberId()).getValue() + 1);
     }
 
-    /*todo method should be concurrent, inside sendEvents should be invoked once every minute
-    most likely timing should be reworked smh to not include seconds while checking for current event
-    */
-    //todo this method is only for testing, should be removed later
-    public void beginNotificationSending(boolean enableSending){
-        //todo there should be added method call to change next event times for sent events
-        /*
-        it seems that db should store how often event happens in minutes, nextEvent time is measured as current nextEvent.plusMinutes(minutesFromDb)
-        should work fine but somehow i still need to determine how to skip checking seconds since they are irrelevant and could cause potential event loss
-         */
-        LocalDateTime placeholderTime = LocalDateTime.of(2000,1,1,1,1);
-        //placeholderTime.plusMinutes(1);
-        log.info("placeholder time " + placeholderTime);
-        //todo placeholderTime should be changed to now()
-        startEventNotificationChain(placeholderTime);
-    }
-
     @EventListener(ApplicationReadyEvent.class)
     public void beginSendingNotificationsOnStartup(){
         LocalDateTime placeholderTime = LocalDateTime.of(2000,1,1,1,1);
@@ -124,21 +76,8 @@ public class SubscriberNotificationService {
         Runnable sendNotificationsRunnable = () -> startEventNotificationChain(placeholderTime);
         ScheduledExecutorService executorService = new ScheduledThreadPoolExecutor(1);
         executorService.scheduleAtFixedRate(sendNotificationsRunnable, 0 ,1, TimeUnit.MINUTES);
-        //placeholderTime.plusMinutes(1);
         log.info("placeholder time " + placeholderTime);
-        //startEventNotificationChain(placeholderTime);
     }
-
-    /*
-        @EventListener(ApplicationReadyEvent.class)
-    public void beginSendingNotificationsOnStartup(){
-        LocalDateTime placeholderTime = LocalDateTime.of(2000,1,1,1,1);
-        //placeholderTime.plusMinutes(1);
-        log.info("placeholder time " + placeholderTime);
-        //todo placeholderTime should be changed to now()
-        startEventNotificationChain(placeholderTime);
-    }
-     */
 
     private void startEventNotificationChain(LocalDateTime currentTime){
         log.info("starting event sending at " + currentTime + " called by separate thread");
@@ -162,11 +101,9 @@ public class SubscriberNotificationService {
     }
 
     private void sendCurrentEventsToSubs(List<Object> objects){
-        log.info("-----------------PAGMAN---------------");
         SubscriberEntity sub = (SubscriberEntity) objects.get(0);
         List<EventEntity> events = (List<EventEntity>) objects.get(1);
-        log.info("+++ subs " + sub);
-        log.info("+++ events" + events);
+        log.info("sending events " + events + " to sub " + sub);
         deliveryList.put(sub.getSubscriberId(),
                 new AbstractMap.SimpleEntry<>(
                     events.stream().map(eventResponseMapper::mapEntityToResponse).collect(Collectors.toList()),
@@ -192,9 +129,6 @@ public class SubscriberNotificationService {
     @Value("${settings.delayEventTime}")
     private Long postponeMinutes;
     private void updateEventAfterSending(EventEntity event){
-//        event.toBuilder()
-//                .lastHappened(event.getNextEventTime())
-//                .nextEventTime();
         log.info("Update event invoked");
         //todo this could lead to bugs if the frequency is less than postpone time, testing required
         eventService.saveEntity(
@@ -210,12 +144,6 @@ public class SubscriberNotificationService {
                 event.getNextEventTime().plusMinutes(event.getFrequency()).minusMinutes(postponeMinutes));
         log.info("Next event determined like this: " + event.getNextEventTime() + " + "
         + event.getFrequency() + " - " + postponeMinutes);
-        /*LocalDateTime nextEventTime = event.getNextEventTime().plusMinutes(event.getFrequency()).minusMinutes(postponeMinutes);
-        if (nextEventTime.isBefore(LocalDateTime.now()))
-
-        if (event.isWasPostponed())
-            event.setNextEventTime(event.getNextEventTime().plusMinutes(event.getFrequency()));
-        */
     }
 
 
@@ -244,7 +172,7 @@ public class SubscriberNotificationService {
     }
 
 
-    //todo consider moving it to other class since endpoint calls will be used multiple times
+    //todo consider moving it to other class since endpoint calls may be used multiple times
     public Mono<SubscriberHealthCheckDto> sendEvent(SubscriberEntity sub, EventDto eventDto){
         log.info("Starting sending events to subs\n-----------------------------------");
         try {
@@ -253,7 +181,7 @@ public class SubscriberNotificationService {
                     .uri(sub.getEndpoint())
                     .bodyValue(eventDto)
                     .retrieve()
-                    .onStatus(httpStatusCode -> httpStatusCode.isError(), clientResponse -> Mono.error(new ApiException("bruh","400")))
+                    .onStatus(httpStatusCode -> httpStatusCode.isError(), clientResponse -> Mono.error(new ApiException("Client endpoint not found","500")))
                     .bodyToMono(SubscriberHealthCheckDto.class)
                     .onErrorResume(e -> {
                         if (e instanceof UnknownHostException){
@@ -268,18 +196,6 @@ public class SubscriberNotificationService {
             return Mono.just(mapSubToFailedHC(sub));
         }
     }
-/*
-    public Flux<SubscriberHealthCheckDto> healthcheckHeartbeat(){
-        //todo call this every minute
-        userService.findAll().flatMap(u -> subscriberRepository.getSubscriberEntitiesByUserId(u.getId())
-                .flatMap(sub ->
-                    checkHC(sub)//.flatMap(hc -> hc.isDeliverySuccessful() == false ? undeliveredHC.put(hc, 0) : undeliveredHC.remove(hc)  )
-                ));
-        while (hcRequired == true){
-            checkHC();
-        }
-    }
-*/
 
     public Mono<SubscriberResponseDto> subscribe(SubscriberRequestDto requestDto) {
       return subscriberRepository.findById(requestDto.getSubscriberId()).flatMap(subscriberEntity -> {
