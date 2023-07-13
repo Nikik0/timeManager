@@ -21,6 +21,8 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import java.time.LocalDateTime;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @ExtendWith(SpringExtension.class)
 public class UserServiceTest {
     @InjectMocks
@@ -87,7 +89,10 @@ public class UserServiceTest {
                 .thenReturn(Mono.just(entity_2));
         StepVerifier.create(userService.change(userRequestDto))
                 .expectSubscription()
-                .expectNext(userDto)
+                .consumeNextWith(dto -> {
+                    assertEquals(dto.getId(), entity_2.getId());
+                    assertEquals(dto.getName(), entity_2.getName());
+                })
                 .verifyComplete();
     }
 

@@ -37,8 +37,6 @@ public class SubscriberNotificationService {
     private final WebClient webClient = WebClient.builder().baseUrl(BASE_URL).build();
     private final EventService eventService;
 
-
-
     //todo this is a description of workflow for event time increase via notification
     /*
     event happens -> we want to postpone it -> click button for 30 extra minutes -> call about postponing this event comes ->
@@ -47,11 +45,8 @@ public class SubscriberNotificationService {
      */
 
     private final EventResponseMapper eventResponseMapper;
-
     private final Integer MAX_RETRIES_FOR_SUBSCRIBER = 100;
-
     private Map<Long, Map.Entry<List<EventDto>, Integer>> deliveryList = new HashMap<>();
-
     private void removeDeliveredEvents(SubscriberEntity sub, EventDto eventDto){
         log.info("delivered event " + eventDto + " was removed from delivery list");
         //todo check if performs or needs to be reassigned to older map
@@ -134,8 +129,8 @@ public class SubscriberNotificationService {
         eventService.saveEntity(
                 event.toBuilder()
                         .lastHappened(event.getNextEventTime())
-                        .wasPostponed(false)
-                        .nextEventTime(event.isWasPostponed() ?
+                        .postponed(false)
+                        .nextEventTime(event.isPostponed() ?
                                 event.getNextEventTime().plusMinutes(event.getFrequency()).minusMinutes(postponeMinutes)
                                 : event.getNextEventTime().plusMinutes(event.getFrequency()))
                         .build()
