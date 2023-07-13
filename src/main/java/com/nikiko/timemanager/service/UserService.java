@@ -1,18 +1,15 @@
 package com.nikiko.timemanager.service;
 
-import com.nikiko.timemanager.dto.EventDto;
 import com.nikiko.timemanager.dto.UserDto;
 import com.nikiko.timemanager.dto.UserRequestDto;
 import com.nikiko.timemanager.entity.UserEntity;
 import com.nikiko.timemanager.entity.UserRole;
 import com.nikiko.timemanager.exception.ApiException;
-import com.nikiko.timemanager.mapper.UserRequestMapper;
-import com.nikiko.timemanager.mapper.UserResponseMapper;
+import com.nikiko.timemanager.mapper.UserMapper;
 import com.nikiko.timemanager.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
@@ -21,24 +18,23 @@ import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 public class UserService {
-    private final UserRequestMapper requestMapper;
-    private final UserResponseMapper responseMapper;
+    private final UserMapper userMapper;
     private final UserRepository userRepository;
 
     public Mono<UserDto> save(UserRequestDto newUser){
         log.info("saving user "+ newUser.getId());
-        return userRepository.save(requestMapper.mapFromRequestToEntity(newUser)
+        return userRepository.save(userMapper.mapFromRequestToEntity(newUser)
                     .toBuilder()
                     .userRole(UserRole.USER)
                     .createdAt(LocalDateTime.now())
                     .updatedAt(LocalDateTime.now())
                     .blocked(false)
                     .build()
-        ).map(responseMapper::mapFromEntityToResponse).switchIfEmpty(Mono.error(new ApiException("Failed to save event", "500")));
+        ).map(userMapper::mapFromEntityToResponse).switchIfEmpty(Mono.error(new ApiException("Failed to save event", "500")));
     }
 
     public Mono<UserDto> findById(Long id){
-        return userRepository.findById(id).map(responseMapper::mapFromEntityToResponse).switchIfEmpty(Mono.error(new ApiException("User was not found", "404")));
+        return userRepository.findById(id).map(userMapper::mapFromEntityToResponse).switchIfEmpty(Mono.error(new ApiException("User was not found", "404")));
     }
 
     public void delete(UserRequestDto userRequestDto){
@@ -57,7 +53,7 @@ public class UserService {
                     userRepository.save(updatedUserEntity).subscribe();
                     return Mono.just(updatedUserEntity);
                 }
-        ).map(responseMapper::mapFromEntityToResponse);
+        ).map(userMapper::mapFromEntityToResponse);
     }
 
 //    public Flux<UserDto> findAll(){

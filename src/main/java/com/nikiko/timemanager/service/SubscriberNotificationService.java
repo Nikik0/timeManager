@@ -5,7 +5,7 @@ import com.nikiko.timemanager.dto.*;
 import com.nikiko.timemanager.entity.EventEntity;
 import com.nikiko.timemanager.entity.SubscriberEntity;
 import com.nikiko.timemanager.exception.ApiException;
-import com.nikiko.timemanager.mapper.EventResponseMapper;
+import com.nikiko.timemanager.mapper.EventMapper;
 import com.nikiko.timemanager.mapper.SubscriberMapper;
 import com.nikiko.timemanager.repository.SubscriberRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -31,6 +30,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class SubscriberNotificationService {
+    private final EventMapper eventMapper;
     private final SubscriberMapper subscriberMapper;
     private final SubscriberRepository subscriberRepository;
     private static final String BASE_URL = "http://localhost:8083/timemanager/api/v1";
@@ -44,7 +44,6 @@ public class SubscriberNotificationService {
     -> send the notification that event was postponed successfully to all subs of this user
      */
 
-    private final EventResponseMapper eventResponseMapper;
     private final Integer MAX_RETRIES_FOR_SUBSCRIBER = 100;
     private Map<Long, Map.Entry<List<EventDto>, Integer>> deliveryList = new HashMap<>();
     private void removeDeliveredEvents(SubscriberEntity sub, EventDto eventDto){
@@ -101,7 +100,7 @@ public class SubscriberNotificationService {
         log.info("sending events " + events + " to sub " + sub);
         deliveryList.put(sub.getSubscriberId(),
                 new AbstractMap.SimpleEntry<>(
-                    events.stream().map(eventResponseMapper::mapEntityToResponse).collect(Collectors.toList()),
+                    events.stream().map(eventMapper::mapEntityToResponse).collect(Collectors.toList()),
                     0
         ));
         sendEvents(sub, events);
@@ -112,11 +111,11 @@ public class SubscriberNotificationService {
             log.info("now sending, event id is " + event.getId());
             retryIncrease(sub);
             updateEventAfterSending(event);
-            sendEvent(sub,eventResponseMapper.mapEntityToResponse(event)).flatMap(health ->{
+            sendEvent(sub, eventMapper.mapEntityToResponse(event)).flatMap(health ->{
                 log.info("sending was for sub " + sub + " mapped hc " + mapSubToFailedHC(sub));
                 log.info(" health from sending " + health);
                 if (health.isDeliverySuccessful())
-                    removeDeliveredEvents(sub,eventResponseMapper.mapEntityToResponse(event));
+                    removeDeliveredEvents(sub, eventMapper.mapEntityToResponse(event));
                 return Mono.just(health);
             }).subscribe();
         }

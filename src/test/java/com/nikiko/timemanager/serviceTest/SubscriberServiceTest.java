@@ -6,8 +6,7 @@ import com.nikiko.timemanager.dto.SubscriberRequestDto;
 import com.nikiko.timemanager.dto.SubscriberResponseDto;
 import com.nikiko.timemanager.entity.EventEntity;
 import com.nikiko.timemanager.entity.SubscriberEntity;
-import com.nikiko.timemanager.mapper.EventRequestMapper;
-import com.nikiko.timemanager.mapper.EventResponseMapper;
+import com.nikiko.timemanager.mapper.EventMapper;
 import com.nikiko.timemanager.mapper.SubscriberMapper;
 import com.nikiko.timemanager.repository.SubscriberRepository;
 import com.nikiko.timemanager.service.SubscriberNotificationService;
@@ -39,9 +38,7 @@ public class SubscriberServiceTest {
 
     private SubscriberEntity subscriberEntity;
     @Spy
-    private EventResponseMapper eventResponseMapper = Mappers.getMapper(EventResponseMapper.class);
-    @Spy
-    private EventRequestMapper eventRequestMapper = Mappers.getMapper(EventRequestMapper.class);
+    private EventMapper eventMapper = Mappers.getMapper(EventMapper.class);
     private EventEntity eventEntity;
     private EventRequestDto eventRequestDto;
     private EventDto eventDto;
@@ -77,12 +74,12 @@ public class SubscriberServiceTest {
                 .endpoint(subscriberEntity.getEndpoint())
                 .build();
         subscriberResponseDto = subscriberMapper.mapEntityToResponse(subscriberEntity);
-        eventDto = eventResponseMapper.mapEntityToResponse(eventEntity);
-        eventRequestDto = eventRequestMapper.mapFromEntityToRequest(eventEntity);
+        eventDto = eventMapper.mapEntityToResponse(eventEntity);
+        eventRequestDto = eventMapper.mapFromEntityToRequest(eventEntity);
         Mockito.when(subscriberMapper.mapEntityToResponse(subscriberEntity)).thenReturn(subscriberResponseDto);
         Mockito.when(subscriberMapper.mapRequestToEntity(subscriberRequestDto)).thenReturn(subscriberEntity);
-        Mockito.when(eventResponseMapper.mapEntityToResponse(eventEntity)).thenReturn(eventDto);
-        Mockito.when(eventRequestMapper.mapFromRequestToEntity(eventRequestDto)).thenReturn(eventEntity);
+        Mockito.when(eventMapper.mapEntityToResponse(eventEntity)).thenReturn(eventDto);
+        Mockito.when(eventMapper.mapFromRequestToEntity(eventRequestDto)).thenReturn(eventEntity);
 //        System.out.println("another test " + subscriberMapper.mapRequestToEntity(subscriberRequestDto));
 //        System.out.println("sub ent " + subscriberEntity);
 //        System.out.println("srespdto " + subscriberMapper.mapEntityToResponse(subscriberEntity));

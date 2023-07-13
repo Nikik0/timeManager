@@ -3,7 +3,6 @@ package com.nikiko.timemanager.controller;
 import com.nikiko.timemanager.dto.UserDto;
 import com.nikiko.timemanager.dto.UserRequestDto;
 import com.nikiko.timemanager.exception.ApiException;
-import com.nikiko.timemanager.mapper.UserResponseMapper;
 import com.nikiko.timemanager.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,8 +14,6 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 @RequestMapping("timemanager/api/v1/customers")
 public class UserController {
-
-    //private final UserResponseMapper responseMapper;
     private final UserService userService;
 
     @PostMapping("/info")
