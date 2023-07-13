@@ -5,8 +5,7 @@ import com.nikiko.timemanager.dto.UserRequestDto;
 import com.nikiko.timemanager.entity.UserEntity;
 import com.nikiko.timemanager.entity.UserRole;
 import com.nikiko.timemanager.exception.ApiException;
-import com.nikiko.timemanager.mapper.UserRequestMapper;
-import com.nikiko.timemanager.mapper.UserResponseMapper;
+import com.nikiko.timemanager.mapper.UserMapper;
 import com.nikiko.timemanager.repository.UserRepository;
 import com.nikiko.timemanager.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,7 +15,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
 import org.mockito.*;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import java.time.LocalDateTime;
@@ -30,19 +28,17 @@ public class UserServiceTest {
     @Mock
     private UserRepository userRepository;
     @Spy
-    private UserResponseMapper userResponseMapper = Mappers.getMapper(UserResponseMapper.class);
-    @Spy
-    private UserRequestMapper userRequestMapper = Mappers.getMapper(UserRequestMapper.class);
+    private UserMapper userMapper = Mappers.getMapper(UserMapper.class);
     private UserEntity entity;
     private UserDto userDto;
     private UserRequestDto userRequestDto;
     @BeforeEach
     public void setup(){
         entity = new UserEntity(1L, "Reak", "qwerty", false, UserRole.USER, LocalDateTime.now(), LocalDateTime.now());
-        userDto = userResponseMapper.mapFromEntityToResponse(entity);
+        userDto = userMapper.mapFromEntityToResponse(entity);
         userRequestDto = new UserRequestDto(entity.getId(), entity.getName(), entity.getPassword());
-        Mockito.when(userResponseMapper.mapFromEntityToResponse(entity)).thenReturn(userDto);
-        Mockito.when(userRequestMapper.mapFromRequestToEntity(userRequestDto)).thenReturn(entity);
+        Mockito.when(userMapper.mapFromEntityToResponse(entity)).thenReturn(userDto);
+        Mockito.when(userMapper.mapFromRequestToEntity(userRequestDto)).thenReturn(entity);
     }
 
     @Test

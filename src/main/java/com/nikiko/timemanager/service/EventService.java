@@ -5,16 +5,12 @@ import com.nikiko.timemanager.dto.EventRequestDto;
 import com.nikiko.timemanager.dto.UserRequestDto;
 import com.nikiko.timemanager.entity.EventEntity;
 import com.nikiko.timemanager.exception.ApiException;
-import com.nikiko.timemanager.mapper.EventRequestMapper;
-import com.nikiko.timemanager.mapper.EventResponseMapper;
+import com.nikiko.timemanager.mapper.EventMapper;
 import com.nikiko.timemanager.repository.EventRepository;
-import com.nikiko.timemanager.repository.SubscriberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -25,17 +21,16 @@ import java.time.LocalDateTime;
 @Slf4j
 public class EventService {
     private final EventRepository eventRepository;
-    private final EventRequestMapper requestMapper;
+    private final EventMapper eventMapper;
     @Value("${settings.delayEventTime}")
     private Long postponeMinutes;
-    private final EventResponseMapper responseMapper;
 
     public Mono<EventDto> getSingle(Long id){
-        return eventRepository.findById(id).map(responseMapper::mapEntityToResponse).switchIfEmpty(Mono.error(new ApiException("Event was not found", "404")));
+        return eventRepository.findById(id).map(eventMapper::mapEntityToResponse).switchIfEmpty(Mono.error(new ApiException("Event was not found", "404")));
     }
 
     public Flux<EventDto> getAll(UserRequestDto owner){
-        return eventRepository.getEventEntitiesByOwnerId(owner.getId()).map(responseMapper::mapEntityToResponse).switchIfEmpty(Mono.error(new ApiException("No events found", "404")));
+        return eventRepository.getEventEntitiesByOwnerId(owner.getId()).map(eventMapper::mapEntityToResponse).switchIfEmpty(Mono.error(new ApiException("No events found", "404")));
     }
 
     public Mono<EventEntity> saveEntity(EventEntity event){
@@ -54,12 +49,12 @@ public class EventService {
             eventRepository.save(updatedEntity).subscribe();
             log.info("event saved " + updatedEntity);
             return Mono.just(updatedEntity);
-        }).map(responseMapper::mapEntityToResponse);
+        }).map(eventMapper::mapEntityToResponse);
     }
 
     public Mono<EventDto> create(EventRequestDto requestDto){
         log.info(requestDto.toString());
-        return eventRepository.save(requestMapper.mapFromRequestToEntity(requestDto)
+        return eventRepository.save(eventMapper.mapFromRequestToEntity(requestDto)
                         .toBuilder()
                         .createdAt(LocalDateTime.now())
                         .changedAt(LocalDateTime.now())
@@ -68,11 +63,11 @@ public class EventService {
                         .nextEventTime(LocalDateTime.now().plusMinutes(requestDto.getFrequency()))
                         .lastHappened(LocalDateTime.now())
                         .build()
-        ).map(responseMapper::mapEntityToResponse);
+        ).map(eventMapper::mapEntityToResponse);
     }
 
     public Mono<EventDto> extend(EventRequestDto requestDto){
-        return eventRepository.findById(requestDto.getId()).map(responseMapper::mapEntityToResponse);
+        return eventRepository.findById(requestDto.getId()).map(eventMapper::mapEntityToResponse);
     }
 
     public Mono<Void> delete(EventRequestDto requestDto){
@@ -157,7 +152,7 @@ public class EventService {
                     );
                     return Mono.just(eventEntity);
                 }
-        ).map(responseMapper::mapEntityToResponse);
+        ).map(eventMapper::mapEntityToResponse);
         /*
         eventRepository.saveAll(
                 eventRepository.getEventEntitiesByOwnerIdAndNextEventTimeBetween(event.getOwner_id(), currentTime,

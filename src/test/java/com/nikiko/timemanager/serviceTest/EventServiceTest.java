@@ -4,23 +4,15 @@ import com.nikiko.timemanager.dto.EventDto;
 import com.nikiko.timemanager.dto.EventRequestDto;
 import com.nikiko.timemanager.dto.UserRequestDto;
 import com.nikiko.timemanager.entity.EventEntity;
-import com.nikiko.timemanager.entity.UserEntity;
-import com.nikiko.timemanager.entity.UserRole;
-import com.nikiko.timemanager.mapper.EventRequestMapper;
-import com.nikiko.timemanager.mapper.EventResponseMapper;
-import com.nikiko.timemanager.mapper.UserRequestMapper;
-import com.nikiko.timemanager.mapper.UserResponseMapper;
+import com.nikiko.timemanager.mapper.EventMapper;
 import com.nikiko.timemanager.repository.EventRepository;
-import com.nikiko.timemanager.repository.UserRepository;
 import com.nikiko.timemanager.service.EventService;
-import com.nikiko.timemanager.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
 import org.mockito.*;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -37,9 +29,7 @@ public class EventServiceTest {
     @Mock
     private EventRepository eventRepository;
     @Spy
-    private EventResponseMapper eventResponseMapper = Mappers.getMapper(EventResponseMapper.class);
-    @Spy
-    private EventRequestMapper eventRequestMapper = Mappers.getMapper(EventRequestMapper.class);
+    private EventMapper eventMapper = Mappers.getMapper(EventMapper.class);
 
     private final Long postponeMinutes = 30L;
     private EventEntity eventEntity;
@@ -64,10 +54,10 @@ public class EventServiceTest {
                 .lastHappened(LocalDateTime.now())
                 .frequency(30L)
                 .build();
-        eventDto = eventResponseMapper.mapEntityToResponse(eventEntity);
-        eventRequestDto = eventRequestMapper.mapFromEntityToRequest(eventEntity);
-        Mockito.when(eventResponseMapper.mapEntityToResponse(eventEntity)).thenReturn(eventDto);
-        Mockito.when(eventRequestMapper.mapFromRequestToEntity(eventRequestDto)).thenReturn(eventEntity);
+        eventDto = eventMapper.mapEntityToResponse(eventEntity);
+        eventRequestDto = eventMapper.mapFromEntityToRequest(eventEntity);
+        Mockito.when(eventMapper.mapEntityToResponse(eventEntity)).thenReturn(eventDto);
+        Mockito.when(eventMapper.mapFromRequestToEntity(eventRequestDto)).thenReturn(eventEntity);
     }
 
     @Test
