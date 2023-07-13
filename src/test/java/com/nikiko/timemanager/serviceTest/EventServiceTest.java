@@ -58,7 +58,7 @@ public class EventServiceTest {
                 .createdAt(LocalDateTime.now())
                 .changedAt(LocalDateTime.now())
                 .startTime(LocalDateTime.now())
-                .wasPostponed(false)
+                .postponed(false)
                 .ownerId(1L)
                 .nextEventTime(LocalDateTime.now().plusMinutes(30L))
                 .lastHappened(LocalDateTime.now())
