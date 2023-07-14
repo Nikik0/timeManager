@@ -74,39 +74,6 @@ public class EventService {
         return eventRepository.deleteById(requestDto.getId());
     }
 
-//    public Flux<EventEntity> getEventEntitiesByNextEventTime(LocalDateTime currentTime){
-//        return eventRepository.getEventEntitiesByNextEventTimeBetween(currentTime, currentTime.plusMinutes(1));
-//    }
-
-//    public Flux<EventEntity> getEventEntitiesByOwnerIdAndNextEventTimeAfter(Long userId, LocalDateTime time){
-//        return eventRepository.getEventEntitiesByOwnerIdAndNextEventTimeAfter(userId, time);
-//    }
-
-//    public void postponeEventsForUser(Long userId, Long additionalMinutes, LocalDateTime currentTime) {
-//        eventRepository.saveAll(
-//                this.getEventEntitiesByOwnerIdAndNextEventTimeAfter(userId, currentTime)
-//                        .flatMap(event -> {
-//                            event.setNextEventTime(
-//                                    event.getNextEventTime().plusMinutes(additionalMinutes)
-//                            );
-//                            return Mono.just(event);
-//                        })
-//        );
-//    }
-//
-//    public void postponeEventAfterEvent(EventDto eventDto, LocalDateTime currentTime) {
-//        eventRepository.saveAll(
-//                this.getEventEntitiesByOwnerIdAndNextEventTimeAfter(eventDto.getOwnerId(), currentTime)
-//                        .flatMap(event -> {
-//                            if (event.getId() != eventDto.getId())
-//                                event.setNextEventTime(
-//                                        event.getNextEventTime().plusMinutes(postponeMinutes)
-//                                );
-//                            return Mono.just(event);
-//                        })
-//        );
-//    }
-
     /*
     | week 1 |                                                               | week 2 |
     | sunday | monday | tuesday | wednesday | Thursday | Friday | Saturday | | sunday | monday | tuesday | wednesday | Thursday | Friday | Saturday |
@@ -155,18 +122,6 @@ public class EventService {
                     return Mono.just(eventEntity);
                 }
         ).map(eventMapper::mapEntityToResponse);
-        /*
-        eventRepository.saveAll(
-                eventRepository.getEventEntitiesByOwnerIdAndNextEventTimeBetween(event.getOwner_id(), currentTime,
-                                eventDto.getNextEventTime())    //todo <- this is a possible problem if the event was changed while it was happening and client can't provide valid info
-                        .flatMap(event -> {
-                            event.setNextEventTime(
-                                    eventDto.getNextEventTime().plusMinutes(additionalMinutes)
-                            );
-                            return Mono.just(event);
-                        })
-        );
-        */
     }
 
 }
