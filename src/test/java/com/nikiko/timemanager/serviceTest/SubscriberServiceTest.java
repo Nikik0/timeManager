@@ -22,6 +22,9 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @ExtendWith(SpringExtension.class)
 public class SubscriberServiceTest {
@@ -148,4 +151,23 @@ public class SubscriberServiceTest {
                 .expectNext(subscriberResponseDto)
                 .verifyComplete();
     }
+
+
+//    private void exampleMethodInvoker(){
+//        subscriberRepository.getSubscriberEntitiesByUserId(1L).flatMap(sub -> {
+//                    sub.setSubscriberId(2L);
+//                    return Mono.just(sub);
+//                }
+//        ).subscribe(this::exampleMethodeInvoked);
+//    }
+//
+//    private void exampleMethodeInvoked(SubscriberEntity subscriberEntity) {
+//        doSmth(subscriberEntity);
+//    }
+//
+//    @Test
+//    @DisplayName("test method")
+//    public void sub(){
+//        Mockito.when(subscriberNotificationService.)
+//    }
 }

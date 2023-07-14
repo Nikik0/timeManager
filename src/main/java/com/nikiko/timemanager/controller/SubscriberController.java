@@ -25,7 +25,7 @@ import java.time.LocalDateTime;
 public class SubscriberController {
 
     private final SubscriberNotificationService notificationService;
-    private final EventService eventService;
+    //private final EventService eventService;
 
     @PostMapping("/subscribe")
     public Mono<SubscriberResponseDto> subscribe(@RequestBody SubscriberRequestDto requestDto){
@@ -56,8 +56,5 @@ public class SubscriberController {
 //        return Mono.just("Test call in sub controller successful");
 //    }
 
-    @PostMapping("/postpone")
-    public Mono<EventDto> postpone(@RequestBody EventRequestDto eventRequestDto){
-        return eventService.postponeEventBetween(eventRequestDto, LocalDateTime.now());
-    }
+
 }

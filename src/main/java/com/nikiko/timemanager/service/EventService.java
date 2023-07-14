@@ -74,38 +74,38 @@ public class EventService {
         return eventRepository.deleteById(requestDto.getId());
     }
 
-    public Flux<EventEntity> getEventEntitiesByNextEventTime(LocalDateTime currentTime){
-        return eventRepository.getEventEntitiesByNextEventTimeBetween(currentTime, currentTime.plusMinutes(1));
-    }
+//    public Flux<EventEntity> getEventEntitiesByNextEventTime(LocalDateTime currentTime){
+//        return eventRepository.getEventEntitiesByNextEventTimeBetween(currentTime, currentTime.plusMinutes(1));
+//    }
 
-    public Flux<EventEntity> getEventEntitiesByOwnerIdAndNextEventTimeAfter(Long userId, LocalDateTime time){
-        return eventRepository.getEventEntitiesByOwnerIdAndNextEventTimeAfter(userId, time);
-    }
+//    public Flux<EventEntity> getEventEntitiesByOwnerIdAndNextEventTimeAfter(Long userId, LocalDateTime time){
+//        return eventRepository.getEventEntitiesByOwnerIdAndNextEventTimeAfter(userId, time);
+//    }
 
-    public void postponeEventsForUser(Long userId, Long additionalMinutes, LocalDateTime currentTime) {
-        eventRepository.saveAll(
-                this.getEventEntitiesByOwnerIdAndNextEventTimeAfter(userId, currentTime)
-                        .flatMap(event -> {
-                            event.setNextEventTime(
-                                    event.getNextEventTime().plusMinutes(additionalMinutes)
-                            );
-                            return Mono.just(event);
-                        })
-        );
-    }
-
-    public void postponeEventAfterEvent(EventDto eventDto, LocalDateTime currentTime) {
-        eventRepository.saveAll(
-                this.getEventEntitiesByOwnerIdAndNextEventTimeAfter(eventDto.getOwnerId(), currentTime)
-                        .flatMap(event -> {
-                            if (event.getId() != eventDto.getId())
-                                event.setNextEventTime(
-                                        event.getNextEventTime().plusMinutes(postponeMinutes)
-                                );
-                            return Mono.just(event);
-                        })
-        );
-    }
+//    public void postponeEventsForUser(Long userId, Long additionalMinutes, LocalDateTime currentTime) {
+//        eventRepository.saveAll(
+//                this.getEventEntitiesByOwnerIdAndNextEventTimeAfter(userId, currentTime)
+//                        .flatMap(event -> {
+//                            event.setNextEventTime(
+//                                    event.getNextEventTime().plusMinutes(additionalMinutes)
+//                            );
+//                            return Mono.just(event);
+//                        })
+//        );
+//    }
+//
+//    public void postponeEventAfterEvent(EventDto eventDto, LocalDateTime currentTime) {
+//        eventRepository.saveAll(
+//                this.getEventEntitiesByOwnerIdAndNextEventTimeAfter(eventDto.getOwnerId(), currentTime)
+//                        .flatMap(event -> {
+//                            if (event.getId() != eventDto.getId())
+//                                event.setNextEventTime(
+//                                        event.getNextEventTime().plusMinutes(postponeMinutes)
+//                                );
+//                            return Mono.just(event);
+//                        })
+//        );
+//    }
 
     /*
     | week 1 |                                                               | week 2 |
@@ -134,22 +134,24 @@ public class EventService {
 
     //this is testing of workflow explained above
     public Mono<EventDto> postponeEventBetween(EventRequestDto eventRequestDto, LocalDateTime currentTime) {
-        log.info("postpone method started");
         return eventRepository.findById(eventRequestDto.getId()).flatMap(eventEntity -> {
                     eventRepository.saveAll(
                             eventRepository.getEventEntitiesByOwnerIdAndNextEventTimeBetween(
-                                    eventEntity.getOwnerId(), currentTime, eventEntity.getNextEventTime()
+                                            eventEntity.getOwnerId(), currentTime, eventEntity.getNextEventTime()
                                     )
                                     .flatMap(event -> {
-                                        log.info("event before postpone " + event);
                                         event.setNextEventTime(
-                                                eventEntity.getNextEventTime().plusMinutes(postponeMinutes)
+                                                event.getNextEventTime().plusMinutes(postponeMinutes)
                                         );
                                         event.setPostponed(true);
-                                        log.info("event after postpone " + event);
                                         return Mono.just(event);
                                     })
-                    );
+                    ).subscribe();
+                    eventRepository.save(eventEntity.toBuilder()
+                                    .postponed(true)
+                                    .nextEventTime(eventEntity.getNextEventTime().plusMinutes(postponeMinutes))
+                                    .build())
+                            .subscribe();
                     return Mono.just(eventEntity);
                 }
         ).map(eventMapper::mapEntityToResponse);

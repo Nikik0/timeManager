@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
+
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -46,5 +48,9 @@ public class EventController {
     @PostMapping("/extend") //todo placeholder, should be changed or deleted
     public Mono<EventDto> extendEvent(@RequestBody EventRequestDto requestDto){
         return eventService.extend(requestDto);
+    }
+    @PostMapping("/postpone")
+    public Mono<EventDto> postpone(@RequestBody EventRequestDto eventRequestDto){
+        return eventService.postponeEventBetween(eventRequestDto, LocalDateTime.now());
     }
 }

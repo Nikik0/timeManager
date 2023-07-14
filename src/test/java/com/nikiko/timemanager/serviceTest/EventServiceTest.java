@@ -124,29 +124,29 @@ public class EventServiceTest {
                 })
                 .verifyComplete();
     }
-    @Test
-    @DisplayName("getEventEntitiesByNextEventTime returns Flux with EventEntity if successful")
-    public void getEventEntitiesByNextEventTime_returnFluxEventEntities_whenSuccessful(){
-        BDDMockito.when(eventRepository.getEventEntitiesByNextEventTimeBetween(Mockito.any(LocalDateTime.class),Mockito.any(LocalDateTime.class)))
-                .thenReturn(Flux.just(eventEntity, eventEntity));
-        StepVerifier.create(eventService.getEventEntitiesByNextEventTime(LocalDateTime.now()))
-                .expectSubscription()
-                .expectNext(eventEntity)
-                .expectNext(eventEntity)
-                .verifyComplete();
-    }
+//    @Test
+//    @DisplayName("getEventEntitiesByNextEventTime returns Flux with EventEntity if successful")
+//    public void getEventEntitiesByNextEventTime_returnFluxEventEntities_whenSuccessful(){
+//        BDDMockito.when(eventRepository.getEventEntitiesByNextEventTimeBetween(Mockito.any(LocalDateTime.class),Mockito.any(LocalDateTime.class)))
+//                .thenReturn(Flux.just(eventEntity, eventEntity));
+//        StepVerifier.create(eventService.getEventEntitiesByNextEventTime(LocalDateTime.now()))
+//                .expectSubscription()
+//                .expectNext(eventEntity)
+//                .expectNext(eventEntity)
+//                .verifyComplete();
+//    }
 
-    @Test
-    @DisplayName("getEventEntitiesByOwnerIdAndNextEventTimeAfter returns Flux with EventEntity if successful")
-    public void getEventEntitiesByOwnerIdAndNextEventTimeAfter_returnFluxEventEntities_whenSuccessful(){
-        BDDMockito.when(eventRepository.getEventEntitiesByOwnerIdAndNextEventTimeAfter(ArgumentMatchers.anyLong(), Mockito.any(LocalDateTime.class)))
-                .thenReturn(Flux.just(eventEntity, eventEntity));
-        StepVerifier.create(eventService.getEventEntitiesByOwnerIdAndNextEventTimeAfter(1L, LocalDateTime.now()))
-                .expectSubscription()
-                .expectNext(eventEntity)
-                .expectNext(eventEntity)
-                .verifyComplete();
-    }
+//    @Test
+//    @DisplayName("getEventEntitiesByOwnerIdAndNextEventTimeAfter returns Flux with EventEntity if successful")
+//    public void getEventEntitiesByOwnerIdAndNextEventTimeAfter_returnFluxEventEntities_whenSuccessful(){
+//        BDDMockito.when(eventRepository.getEventEntitiesByOwnerIdAndNextEventTimeAfter(ArgumentMatchers.anyLong(), Mockito.any(LocalDateTime.class)))
+//                .thenReturn(Flux.just(eventEntity, eventEntity));
+//        StepVerifier.create(eventService.getEventEntitiesByOwnerIdAndNextEventTimeAfter(1L, LocalDateTime.now()))
+//                .expectSubscription()
+//                .expectNext(eventEntity)
+//                .expectNext(eventEntity)
+//                .verifyComplete();
+//    }
 
     //todo this test should be more meaningful
     @Test
