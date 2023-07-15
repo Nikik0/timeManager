@@ -9,12 +9,11 @@ Features:
 6. The service is built with WebFlux with R2DBC using multithreading to deal with bottlenecks
 
 Next improvements (todo list):
-add flyway
-add blockhound
-null safety checks
-add more unit tests
-nt
-consider including kafka support for input streams
-consider further implementing multithreading
-add auth via external gateway service
-
+* add flyway
+* add blockhound
+* null safety checks
+* add more unit tests
+* nt
+* consider including kafka support for input streams
+* consider further implementing multithreading
+* add auth via external gateway service
