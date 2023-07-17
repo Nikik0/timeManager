@@ -66,10 +66,6 @@ public class EventService {
         ).map(eventMapper::mapEntityToResponse);
     }
 
-    public Mono<EventDto> extend(EventRequestDto requestDto){
-        return eventRepository.findById(requestDto.getId()).map(eventMapper::mapEntityToResponse);
-    }
-
     public Mono<Void> delete(EventRequestDto requestDto){
         return eventRepository.deleteById(requestDto.getId());
     }
