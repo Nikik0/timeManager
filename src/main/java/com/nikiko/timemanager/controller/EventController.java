@@ -45,10 +45,6 @@ public class EventController {
         if (requestDto.getId() != null) return Mono.error(new ApiException("Id should be missing", "400"));
         return eventService.create(requestDto);
     }
-    @PostMapping("/extend") //todo placeholder, should be changed or deleted
-    public Mono<EventDto> extendEvent(@RequestBody EventRequestDto requestDto){
-        return eventService.extend(requestDto);
-    }
     @PostMapping("/postpone")
     public Mono<EventDto> postpone(@RequestBody EventRequestDto eventRequestDto){
         return eventService.postponeEventBetween(eventRequestDto, LocalDateTime.now());
