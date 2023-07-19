@@ -120,4 +120,7 @@ public class EventService {
         ).map(eventMapper::mapEntityToResponse);
     }
 
+    public Flux<EventEntity> getEventEntitiesByNextEventTime(LocalDateTime currentTime) {
+        return eventRepository.getEventEntitiesByNextEventTimeBetween(currentTime, currentTime.plusMinutes(1));
+    }
 }
