@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
 import org.mockito.*;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -31,6 +32,7 @@ public class EventServiceTest {
     @Spy
     private EventMapper eventMapper = Mappers.getMapper(EventMapper.class);
 
+
     private final Long postponeMinutes = 30L;
     private EventEntity eventEntity;
     private EventDto eventDto;
@@ -38,6 +40,7 @@ public class EventServiceTest {
 
     @BeforeEach
     public void setup(){
+        ReflectionTestUtils.setField(eventService, "postponeMinutes", postponeMinutes);
         eventEntity = new EventEntity().toBuilder()
                 .id(1L)
                 .name("Test Event")
@@ -134,8 +137,9 @@ public class EventServiceTest {
                 .thenReturn(Mono.just(eventEntity));
         BDDMockito.when(eventRepository.getEventEntitiesByOwnerIdAndNextEventTimeBetween(ArgumentMatchers.anyLong(), Mockito.any(LocalDateTime.class), Mockito.any(LocalDateTime.class)))
                 .thenReturn(Flux.just(eventEntity, eventEntity));
-        BDDMockito.when(eventRepository.saveAll(Flux.just(eventEntity,eventEntity)))
+        BDDMockito.when(eventRepository.saveAll(Mockito.any(Flux.class)))
                 .thenReturn(Flux.just(eventEntity));
+        BDDMockito.when(eventRepository.save(Mockito.any(EventEntity.class))).thenReturn(Mono.just(eventEntity));
         StepVerifier.create(eventService.postponeEventBetween(eventRequestDto, LocalDateTime.now()))
                 .expectSubscription()
                 .expectNext(eventDto)
