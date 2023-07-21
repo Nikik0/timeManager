@@ -17,3 +17,5 @@ Next improvements (todo list):
 * consider including kafka support for input streams
 * consider further implementing multithreading
 * add auth via external gateway service
+* centralized exception handling
+* add latest db schemas
