@@ -227,7 +227,7 @@ public class SubscriberNotificationService {
         return subscriberRepository.deleteById(requestDto.getSubscriberId());
     }
 
-    public Flux<SubscriberResponseDto> getSubscribersInfo(SubscriberRequestDto requestDto) {
-        return subscriberRepository.getSubscriberEntitiesByUserId(requestDto.getUserId()).map(subscriberMapper::mapEntityToResponse);
+    public Flux<SubscriberResponseDto> getSubscribersInfo(Long userId) {
+        return subscriberRepository.getSubscriberEntitiesByUserId(userId).map(subscriberMapper::mapEntityToResponse);
     }
 }

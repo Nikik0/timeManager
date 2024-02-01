@@ -21,14 +21,14 @@ import java.time.LocalDateTime;
 public class EventController {
     private final EventService eventService;
 
-    @PostMapping("/get")
-    public Mono<EventDto> getSingle(@RequestBody UserRequestDto userRequestDto){
-        return eventService.getSingle(userRequestDto.getId());
+    @GetMapping("/get/{ownerId}")
+    public Mono<EventDto> getSingle(@PathVariable Long ownerId){
+        return eventService.getSingle(ownerId);
     }
 
-    @PostMapping("/all")
-    public Flux<EventDto> getAll(@RequestBody UserRequestDto userRequestDto){
-        return eventService.getAll(userRequestDto);
+    @GetMapping("/all/{ownerId}")
+    public Flux<EventDto> getAll(@PathVariable Long ownerId){
+        return eventService.getAll(ownerId);
     }
 
     @PostMapping("/delete")

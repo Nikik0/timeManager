@@ -16,9 +16,9 @@ import reactor.core.publisher.Mono;
 public class UserController {
     private final UserService userService;
 
-    @PostMapping("/info")
-    public Mono<UserDto> getCustomer(@RequestBody UserRequestDto userRequestDto){
-        return userService.findById(userRequestDto.getId());
+    @GetMapping("/info/{id}")
+    public Mono<UserDto> getCustomer(@PathVariable Long id){
+        return userService.findById(id);
     }
 
     @PostMapping("/create")

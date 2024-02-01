@@ -9,10 +9,7 @@ import com.nikiko.timemanager.service.SubscriberNotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -45,9 +42,9 @@ public class SubscriberController {
     public Mono<Void> delete(@RequestBody SubscriberRequestDto requestDto){
         return notificationService.delete(requestDto);
     }
-    @PostMapping("/info")
-    public Flux<SubscriberResponseDto> getSubscribersInfo(@RequestBody SubscriberRequestDto requestDto){
-        return notificationService.getSubscribersInfo(requestDto);
+    @GetMapping("/info/{userId}")
+    public Flux<SubscriberResponseDto> getSubscribersInfo(@PathVariable Long userId){
+        return notificationService.getSubscribersInfo(userId);
     }
 
 //    @PostMapping("/test")

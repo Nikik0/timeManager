@@ -90,7 +90,7 @@ public class EventServiceTest {
     public void getAll_returnFluxEventDtos_whenSuccessful(){
         BDDMockito.when(eventRepository.getEventEntitiesByOwnerId(ArgumentMatchers.anyLong()))
                 .thenReturn(Flux.just(eventEntity, eventEntity));
-        StepVerifier.create(eventService.getAll(new UserRequestDto(1L,"Test owner", "pass")))
+        StepVerifier.create(eventService.getAll(1L))
                 .expectSubscription()
                 .expectNext(eventDto)
                 .expectNext(eventDto)

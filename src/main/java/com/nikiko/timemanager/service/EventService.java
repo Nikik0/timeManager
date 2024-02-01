@@ -29,8 +29,8 @@ public class EventService {
         return eventRepository.findById(id).map(eventMapper::mapEntityToResponse).switchIfEmpty(Mono.error(new ApiException("Event was not found", "404")));
     }
 
-    public Flux<EventDto> getAll(UserRequestDto owner){
-        return eventRepository.getEventEntitiesByOwnerId(owner.getId()).map(eventMapper::mapEntityToResponse).switchIfEmpty(Mono.error(new ApiException("No events found", "404")));
+    public Flux<EventDto> getAll(Long ownerId){
+        return eventRepository.getEventEntitiesByOwnerId(ownerId).map(eventMapper::mapEntityToResponse).switchIfEmpty(Mono.error(new ApiException("No events found", "404")));
     }
 
     public Mono<EventEntity> saveEntity(EventEntity event){

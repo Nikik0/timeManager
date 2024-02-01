@@ -95,7 +95,7 @@ public class SubscriberServiceTest {
     public void getSubscribersInfo_returnFluxSubRespDto_whenSuccessful(){
         BDDMockito.when(subscriberRepository.getSubscriberEntitiesByUserId(subscriberRequestDto.getUserId()))
                 .thenReturn(Flux.just(subscriberEntity, subscriberEntity));
-        StepVerifier.create(subscriberNotificationService.getSubscribersInfo(subscriberRequestDto))
+        StepVerifier.create(subscriberNotificationService.getSubscribersInfo(subscriberRequestDto.getUserId()))
                 .expectSubscription()
                 .expectNext(subscriberResponseDto)
                 .expectNext(subscriberResponseDto)
