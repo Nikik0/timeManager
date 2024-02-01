@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.ToString;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDateTime;
@@ -20,6 +21,7 @@ public class UserEntity {
     private String name;
     private String password;
     private boolean blocked;
+    @Column("role")
     private UserRole userRole;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

@@ -18,6 +18,7 @@ public class SubscriberEntity {
     @Column("id")
     private Long subscriberId;
     private String endpoint;
+    @Column("user_id")
     private Long userId;
     private boolean enabled;
 }
