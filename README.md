@@ -1,5 +1,8 @@
-This project provides a non-blocking reactive Time Manager
+# AuthorizationServer
 
+Time Manager for scheduling tasks.
+
+## Description
 Features:
 1. CRUD for events, subs and users
 2. Each user may have multiple subs (e.g. multiple devices)
@@ -8,14 +11,36 @@ Features:
 5. Most user cases are covered by unit tests
 6. The service is built with WebFlux with R2DBC using multithreading to deal with bottlenecks
 
-Next improvements (todo list):
-* add flyway
-* add blockhound
-* null safety checks
-* add more unit tests
-* nt
-* consider including kafka support for input streams
-* consider further implementing multithreading
-* add auth via external gateway service
-* centralized exception handling
-* add latest db schemas
+Used technologies:
+* Java 17
+* Spring boot
+* PostgreSQL
+* Gradle
+* Flyway
+* Docker
+* Postman
+
+## Getting Started
+
+### Prerequisites
+
+* Docker
+
+### Installing
+
+* No installing needed, just run it with docker
+
+### Executing program
+
+* Run the compose
+```
+docker-compose up -d
+```
+### Accessing api
+
+Api is available at localhost on port 8083 
+```
+http://localhost:8083/timemanager/api/v1/customers/create
+```
+Import postman collection to postman and test it
+
